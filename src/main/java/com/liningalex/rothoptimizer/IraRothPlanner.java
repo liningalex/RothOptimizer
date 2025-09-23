@@ -1,3 +1,5 @@
+package com.liningalex.rothoptimizer;
+
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,18 +35,18 @@ public class IraRothPlanner {
             investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.05"));
             yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
 
-            RothConversionCalculator myCal = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome, yearBegin, payTaxInIra);
-            myCal.rothBalance(fixIncome, false);
-            System.out.println(myCal.getDetails());
-            myCal.rothBalance(fixIncome, true);
-            System.out.println(myCal.getDetails());
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome, yearBegin, payTaxInIra);
+            rothConversionCalculator.rothBalance(fixIncome, false);
+            System.out.println(rothConversionCalculator.getDetails());
+            rothConversionCalculator.rothBalance(fixIncome, true);
+            System.out.println(rothConversionCalculator.getDetails());
             double maxRoth = Double.MIN_VALUE;
             StringBuffer best = null;
             for (double i = 0; i < ira[0] + ira[1]; i += 1000) {
-                double roth = myCal.rothBalance(fixIncome + i, true);
+                double roth = rothConversionCalculator.rothBalance(fixIncome + i, true);
                 if (roth > maxRoth) {
                     maxRoth = roth;
-                    best = myCal.getDetails();
+                    best = rothConversionCalculator.getDetails();
                 }
             }
             System.out.println(best);
