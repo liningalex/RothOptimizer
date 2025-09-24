@@ -16,11 +16,11 @@ class RothConversionCalculatorTest {
         rothConversionCalculator.rothBalance(360000, true);
         rothConversionCalculator.rothBalance(4360000, true);
         long a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals(a1, 515210);
+        assertEquals(a1, 479371);
         long a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
         assertEquals(a2, 681611);
         long a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals(a3, 511355);
+        assertEquals(a3, 469280);
         long a4 = rothConversionCalculator.rothBalance(360000, true);
         assertEquals(a4, 564433);
 

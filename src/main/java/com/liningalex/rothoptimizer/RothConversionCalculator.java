@@ -101,7 +101,9 @@ public class RothConversionCalculator {
         int[] age = ageBegin.clone();
         double[] iraBalance = iraBegin.clone();
         double totalTax = 0;
-        double[] totalRoth = new double[2];
+        double[] rothBalance = new double[2];
+        double[] rmdBalance = new double[2];
+        double[] rmd = new double[2];
         double[] medicare = new double[2];
         for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
             double income = fixIncome;
@@ -115,9 +117,9 @@ public class RothConversionCalculator {
                 if (age[person] >= 67) {
                     income += ssnIncome[person];
                 }
-                roth[person] = rmdAmount(age, iraBalance, person);
-                iraBalance[person] -= roth[person];
-                income += roth[person];
+                rmd[person] = rmdAmount(age, iraBalance, person);
+                iraBalance[person] -= rmd[person];
+                income += rmd[person];
             }
 
             double taxOrig = taxAmount(income - fedDeduction, fedTaxRate);
@@ -150,28 +152,37 @@ public class RothConversionCalculator {
                 balanceRatio = balanceRatio(iraBalance);
             }
             for (int person = 0; person < 2; person++) {
-                // pay additional tax from ira account
+                rmdBalance[person] += rmd[person];
+                // pay additional tax from rmd account
                 if (payTaxInIra) {
-                    iraBalance[person] -= (tax - taxOrig) * balanceRatio[person];
-                    iraBalance[person] -= (tax - taxOrig) * balanceRatio[person] * tax / income;
+                    rmdBalance[person] -= (tax - taxOrig) * balanceRatio[person];
+                    rmdBalance[person] -= (tax - taxOrig) * balanceRatio[person] * tax / income;
                 }
-                // pay medicare preminus from ira account
-                iraBalance[person] -= (medicare[person] = medicarePreminus(age, income, person));
-                if (iraBalance[person] < 0) {
-                    // pay additional tax from roth account
-                    roth[person] += iraBalance[person];
-                    iraBalance[person] = 0;
+                // pay medicare preminus from rmd account
+                rmdBalance[person] -= (medicare[person] = medicarePreminus(age, income, person));
+                if (rmdBalance[person] < 0) {
+                    // move money from ira to rmd.
+                    iraBalance[person] += rmdBalance[person];
+                    rmdBalance[person] = 0;
+                    // move money from roth to ira.
+                    if (iraBalance[person] < 0) {
+                        rothBalance[person] += iraBalance[person];
+                        iraBalance[person] = 0;
+                    }
                 }
-                totalRoth[person] += roth[person];
+                rothBalance[person] += roth[person];
             }
 
-            details.append(String.format("Year=%d, age=(%d, %d), ira=(%.0f, %.0f), roth=(%.0f, %.0f), income=%.0f, medicare=%.0f, tax=%.0f, taxRate=%.0f, totalTax=%.0f, totalRoth=%.0f",
-                    year, age[0], age[1], iraBalance[0], iraBalance[1], roth[0], roth[1], income, medicare[0] + medicare[1], tax, tax / income * 100, totalTax, totalRoth[0] + totalRoth[1])).append("\n");
+            details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),income=%.0f," +
+                            "medicare=%.0f,tax=%.0f,taxRate=%.0f",
+                    year, age[0], age[1], iraBalance[0], iraBalance[1], rothBalance[0], rothBalance[1], rmd[0], rmd[1], income,
+                    medicare[0] + medicare[1], tax, tax / income * 100, totalTax)).append("\n");
             // add investment return;
             for (int person = 0; person < 2; person++) {
                 age[person]++;
                 iraBalance[person] *= (1 + investRtn);
-                totalRoth[person] *= (1 + investRtn);
+                rothBalance[person] *= (1 + investRtn);
+                rmdBalance[person] *= (1 + investRtn);
             }
 
         }
@@ -182,13 +193,13 @@ public class RothConversionCalculator {
         double[] balanceRatio = balanceRatio(iraBalance);
         for (int person = 0; person < 2; person++) {
             iraBalance[person] -= lastTax * balanceRatio[person];
-            totalRoth[person] += iraBalance[person];
+            rothBalance[person] += iraBalance[person];
             iraBalance[person] = 0;
         }
 
-        details.append(String.format("income=%.0f, toalRoth=%.0f, lastTax=%.0f, totalTax=%.0f",
-                goalIncome, totalRoth[0] + totalRoth[1], lastTax, totalTax + lastTax)).append("\n");
-        return (long)(totalRoth[0] + totalRoth[1]);
+        details.append(String.format("income=%.0f,roth=%.0f,rmd=%.0f,lastTax=%.0f,totalTax=%.0f",
+                goalIncome, rothBalance[0] + rothBalance[1], rmdBalance[0] + rmdBalance[1], lastTax, totalTax + lastTax)).append("\n");
+        return (long)(rothBalance[0] + rothBalance[1] + rmdBalance[0] + rmdBalance[1]);
     }
 
     double[] balanceRatio(double[] iraBalance) {
