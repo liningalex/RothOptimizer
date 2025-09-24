@@ -16,13 +16,13 @@ class RothConversionCalculatorTest {
         rothConversionCalculator.rothBalance(360000, true);
         rothConversionCalculator.rothBalance(4360000, true);
         long a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals(a1, 769140);
+        assertEquals(a1, 515210);
         long a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals(a2, 962761);
+        assertEquals(a2, 681611);
         long a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals(a3, 719629);
+        assertEquals(a3, 511355);
         long a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals(a4, 845583);
+        assertEquals(a4, 564433);
 
     }
 
@@ -40,6 +40,13 @@ class RothConversionCalculatorTest {
         long a = rothConversionCalculator.rmdAmount(age, ira, 0);
         assertEquals(a, 37735);
         assertEquals((long)ira[0], 962264);
+    }
+
+    @Test
+    void medicarePremiums() {
+        int[] age = {65, 0};
+        long a = rothConversionCalculator.medicarePreminus(age, 300000, 0);
+        assertEquals(a, 5340);
     }
 
     @Test
