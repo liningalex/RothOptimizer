@@ -19,8 +19,16 @@
    - Flexible input: income, IRA balances, SSN income, estimate investment return etc.
    - Long-term Roth IRA growth simulation
 
-4. Usage:
-   
+4. Prerequisites:
+    - Java 17 SDK
+    - Maven
+
+5. Usage:
+     
+    Compile with `mvn clean package`
+    
+    Run using the following commands:
+ ```   
     IraRothPlanner 
    --ira={100000,180000}
    --age={60,59}
@@ -29,8 +37,13 @@
    --payTaxInIra=true
    --investRtn=0.05
    --yearBegin=2026
+```
+On windows:
+```
+java -jar .\IRA2RothOptimizer-1.0-SNAPSHOT.jar "--ira={100000,180000}" "--age={60,59}" --fixIncome=12000 "--ssnIncome={18000,28000}" --payTaxInIra=true --investRtn=0.05 --yearBegin=2026
+```
 
-7. Contributing:
+5. Contributing:
    
     Contributions are welcome!  
 Please open an issue or submit a pull request with improvements.  
