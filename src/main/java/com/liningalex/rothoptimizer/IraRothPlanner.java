@@ -40,12 +40,13 @@ public class IraRothPlanner {
             System.out.println(rothConversionCalculator.getDetails());
             rothConversionCalculator.rothBalance(fixIncome, true);
             System.out.println(rothConversionCalculator.getDetails());
+
             double maxRoth = Double.MIN_VALUE;
             StringBuffer best = null;
-            for (double i = 0; i < ira[0] + ira[1]; i += 1000) {
-                double roth = rothConversionCalculator.rothBalance(fixIncome + i, true);
-                if (roth > maxRoth) {
-                    maxRoth = roth;
+            for (double i = 0; i < ira[0] + ira[1]; i += 100) {
+                double[] roth = rothConversionCalculator.rothBalance(fixIncome + i, true);
+                if (roth[0] > maxRoth) {
+                    maxRoth = roth[0];
                     best = rothConversionCalculator.getDetails();
                 }
             }

@@ -30,7 +30,7 @@ public class RothConversionCalculator {
             {212000, 185, 40},
             {266000, 259, 40 + 13.7},
             {334000, 370, 40 + 35.30},
-            {400000, 480.90,  40 + 57},
+            {400000, 480.90, 40 + 57},
             {750000, 591.90, 40 + 78.60},
             {Double.MAX_VALUE, 628.90, 40 + 85}
     };
@@ -43,19 +43,21 @@ public class RothConversionCalculator {
                     2, 21512
             },
             {
-                    4, 50998
+                    4, 50999
             },
             {
-                    6, 80490
+                    6, 80491
             },
             {
-                    8, 111732
+                    8, 111733
             },
             {
-                    9.3, 141212
+                    9.3, 141213
+            },
+            {       10.3, 721319
             },
             {
-                    11.3, 865574
+                    11.3, 865575
             },
             {
                     12.3, 1442628
@@ -79,7 +81,7 @@ public class RothConversionCalculator {
     final double investRtn;
     final double[] ssnIncome;
     final int yearBegin;
-    final boolean payTaxInIra;
+    boolean payTaxInIra;
     StringBuffer details;
 
     public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome, int yearBegin, boolean paytaxInIra) {
@@ -96,7 +98,7 @@ public class RothConversionCalculator {
         return details;
     }
 
-    long rothBalance(double goalIncome, boolean calTex) {
+    double[] rothBalance(double goalIncome, boolean calTex) {
         details = new StringBuffer();
         int[] age = ageBegin.clone();
         double[] iraBalance = iraBegin.clone();
@@ -107,7 +109,7 @@ public class RothConversionCalculator {
         double[] medicare = new double[2];
         for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
             double income = fixIncome;
-            double[] roth = new double[2];
+            double[] toRoth = new double[2];
 
             for (int person = 0; person < 2; person++) {
                 if (age[person] >= life[person]) {
@@ -128,14 +130,14 @@ public class RothConversionCalculator {
             }
 
             double convertAmount = Math.min(goalIncome - income, Math.max(0, iraBalance[0] + iraBalance[1]));
-            double[] balanceRatio = balanceRatio(iraBalance);
+            double[] balanceRatio = convRatio(iraBalance, age, life);
             for (int person = 0; person < 2; person++) {
                 if (convertAmount > 0) {
                     if (iraBalance[person] > 0) {
                         double conv = balanceRatio[person] * convertAmount;
                         conv = Math.min(iraBalance[person], conv);
                         iraBalance[person] -= conv;
-                        roth[person] += conv;
+                        toRoth[person] += conv;
                         income += conv;
                     }
                 }
@@ -149,7 +151,7 @@ public class RothConversionCalculator {
             totalTax += tax;
 
             if (iraBalance[0] + iraBalance[1] > 0) {
-                balanceRatio = balanceRatio(iraBalance);
+                balanceRatio = convRatio(iraBalance, age, life);
             }
             for (int person = 0; person < 2; person++) {
                 rmdBalance[person] += rmd[person];
@@ -170,13 +172,13 @@ public class RothConversionCalculator {
                         iraBalance[person] = 0;
                     }
                 }
-                rothBalance[person] += roth[person];
+                rothBalance[person] += toRoth[person];
             }
 
-            details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),income=%.0f," +
+            details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),conv=(%.0f,%.0f), income=%.0f," +
                             "medicare=%.0f,tax=%.0f,taxRate=%.0f",
-                    year, age[0], age[1], iraBalance[0], iraBalance[1], rothBalance[0], rothBalance[1], rmd[0], rmd[1], income,
-                    medicare[0] + medicare[1], tax, tax / income * 100, totalTax)).append("\n");
+                    year, age[0], age[1], iraBalance[0], iraBalance[1], rothBalance[0], rothBalance[1], rmd[0], rmd[1], toRoth[0], toRoth[1], income,
+                    medicare[0] + medicare[1], tax, tax / income * 100)).append("\n");
             // add investment return;
             for (int person = 0; person < 2; person++) {
                 age[person]++;
@@ -190,7 +192,7 @@ public class RothConversionCalculator {
         if (calTex) {
             lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction, calTaxRate);
         }
-        double[] balanceRatio = balanceRatio(iraBalance);
+        double[] balanceRatio = convRatio(iraBalance, age, life);
         for (int person = 0; person < 2; person++) {
             iraBalance[person] -= lastTax * balanceRatio[person];
             rothBalance[person] += iraBalance[person];
@@ -199,16 +201,35 @@ public class RothConversionCalculator {
 
         details.append(String.format("income=%.0f,roth=%.0f,rmd=%.0f,lastTax=%.0f,totalTax=%.0f",
                 goalIncome, rothBalance[0] + rothBalance[1], rmdBalance[0] + rmdBalance[1], lastTax, totalTax + lastTax)).append("\n");
-        return (long)(rothBalance[0] + rothBalance[1] + rmdBalance[0] + rmdBalance[1]);
+        double[] rtn = new double[3];
+        rtn[0] = rothBalance[0] + rothBalance[1];
+        rtn[1] = rmdBalance[0] + rmdBalance[1];
+        rtn[2] = totalTax + lastTax;
+        return rtn;
     }
 
-    double[] balanceRatio(double[] iraBalance) {
-        double[] balanceRatio = {0.5, 0.5};
+    double[] convRatio(double[] iraBalance, int[] age, int[] life) {
+        double[] ratio = {0.5, 0.5};
         if (iraBalance[0] + iraBalance[1] > 0) {
-            balanceRatio[0] = iraBalance[0] / (iraBalance[0] + iraBalance[1]);
-            balanceRatio[1] = iraBalance[1] / (iraBalance[0] + iraBalance[1]);
+            if (age[0] <= life[0] && age[1] <= life[1]) {
+                double[] ave = new double[2];
+                ave[0] = iraBalance[0] / ((age[0] < 73 ? 73 : life[0]) - age[0] + 1);
+                ave[1] = iraBalance[1] / ((age[1] < 73 ? 73 : life[1]) - age[1] + 1);
+
+                ratio[0] = ave[0] / (ave[0] + ave[1]);
+                ratio[1] = ave[1] / (ave[0] + ave[1]);
+            } else if (age[0] <= life[0]) {
+                ratio[0] = 1;
+                ratio[1] = 0;
+            } else {
+                ratio[0] = 0;
+                ratio[1] = 1;
+            }
+        } else if (iraBalance[0] > 0) {
+            ratio[0] = 1;
+            ratio[1] = 0;
         }
-        return balanceRatio;
+        return ratio;
 
     }
 
@@ -218,7 +239,7 @@ public class RothConversionCalculator {
             rmd = ira[person] / rmdTable[age[person] - 73];
             ira[person] -= rmd;
         }
-        return (long)rmd;
+        return (long) rmd;
     }
 
     long medicarePreminus(int[] age, double income, int person) {
@@ -226,11 +247,11 @@ public class RothConversionCalculator {
         if (age[person] >= 65) {
             for (int i = 0; i < irmaaTbl.length; i++) {
                 if (income <= irmaaTbl[i][0]) {
-                    return (long)(irmaaTbl[i][1] + irmaaTbl[i][2]) * 12;
+                    return (long) (irmaaTbl[i][1] + irmaaTbl[i][2]) * 12;
                 }
             }
         }
-        return (long)preminus;
+        return (long) preminus;
     }
 
     long taxAmount(double income, double[][] taxRate) {
@@ -247,6 +268,6 @@ public class RothConversionCalculator {
         if (tax < 0) {
             tax = 0;
         }
-        return (long)tax;
+        return (long) tax;
     }
 }

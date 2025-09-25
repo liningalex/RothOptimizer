@@ -13,24 +13,30 @@ class RothConversionCalculatorTest {
 
     @Test
     void rothBalance() {
-        rothConversionCalculator.rothBalance(360000, true);
-        rothConversionCalculator.rothBalance(4360000, true);
-        long a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals(a1, 479371);
-        long a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals(a2, 681611);
-        long a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals(a3, 469280);
-        long a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals(a4, 564433);
-
+        double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
+        assertEquals((long)a1[0], 168051);
+        assertEquals((long)a1[1], 311319);
+        assertEquals((long)a1[2], 75474);
+        double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
+        assertEquals((long)a2[0], 700229);
+        assertEquals((long)a2[1], 0);
+        assertEquals((long)a2[2], 70953);
+        double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
+        assertEquals((long)a3[0], 157960);
+        assertEquals((long)a3[1], 311319);
+        assertEquals((long)a3[2], 99470);
+        double[] a4 = rothConversionCalculator.rothBalance(360000, true);
+        assertEquals((long)a4[0], 592063);
+        assertEquals((long)a4[1], 0);
+        assertEquals((long)a4[2], 97912);
     }
 
     @Test
     void balanceRatio() {
-        double[] a = rothConversionCalculator.balanceRatio(ira);
-        assertEquals(a[0], 0.35714285714285715);
-        assertEquals(a[1], 0.6428571428571429);;
+        final int[] life = {88, 89};
+        double[] a = rothConversionCalculator.convRatio(ira, age, life);
+        assertEquals(a[0], 0.40983606557377045);
+        assertEquals(a[1], 0.5901639344262294);;
     }
 
     @Test
@@ -58,6 +64,6 @@ class RothConversionCalculatorTest {
         long c1 = rothConversionCalculator.taxAmount(100000 - rothConversionCalculator.calDeduction, rothConversionCalculator.calTaxRate);
         assertEquals(c1, 2490);
         long c2 = rothConversionCalculator.taxAmount(1000000 - rothConversionCalculator.calDeduction, rothConversionCalculator.calTaxRate);
-        assertEquals(c2, 87521);
+        assertEquals(c2, 88963);
     }
 }
