@@ -1,12 +1,13 @@
 1. Project Goal:
    
-    RothOptimizer is a Java program that calculates the optimal yearly amounts to convert from a Traditional IRA to a Roth IRA. It considers tax brackets, required minimum distributions (RMDs), income levels, and long-term growth assumptions to minimize lifetime tax liability while maximizing after-tax retirement income.
+    RothOptimizer is a Java program that calculates the optimal yearly amounts to convert from a Traditional IRA to a Roth IRA. It considers tax brackets, medicare premiums, required minimum distributions (RMDs), income levels, and long-term growth assumptions to minimize lifetime tax liability while maximizing after-tax retirement income.
 
 2. Description:
    
     RothOptimizer helps individuals and financial planners calculate the optimal amount to convert from a Traditional IRA to a Roth IRA each year**.  
    It takes into account:
    - Current and future tax brackets
+   - medicare premiums
    - Required Minimum Distributions (RMDs)
    - Growth assumptions
    - Retirement horizon
