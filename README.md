@@ -30,6 +30,7 @@
    --payTaxInIra=true
    --investRtn=0.05
    --yearBegin=2026
+   --born={1967,1970}
 
 7. Contributing:
    

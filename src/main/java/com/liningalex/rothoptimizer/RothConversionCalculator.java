@@ -124,6 +124,7 @@ public class RothConversionCalculator {
         else
             return 75;
     }
+
     double[] rothBalance(double goalIncome, boolean calTax) {
         details = new StringBuffer();
         int[] age = ageBegin.clone();
