@@ -124,7 +124,7 @@ public class RothConversionCalculator {
         else
             return 75;
     }
-    double[] rothBalance(double goalIncome, boolean calTex) {
+    double[] rothBalance(double goalIncome, boolean calTax) {
         details = new StringBuffer();
         int[] age = ageBegin.clone();
         double[] iraBalance = iraBegin.clone();
@@ -151,7 +151,7 @@ public class RothConversionCalculator {
             }
 
             double taxOrig = taxAmount(income - fedDeduction(age, income), fedTaxRate);
-            if (calTex) {
+            if (calTax) {
                 taxOrig += taxAmount(income - calDeduction, calTaxRate);
             }
 
@@ -171,7 +171,7 @@ public class RothConversionCalculator {
 
             // tax after additional  conversion.
             double tax = taxAmount(income - fedDeduction(age, income), fedTaxRate);
-            if (calTex) {
+            if (calTax) {
                 tax += taxAmount(income - calDeduction, calTaxRate);
             }
             totalTax += tax;
@@ -215,7 +215,7 @@ public class RothConversionCalculator {
 
         }
         double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate);
-        if (calTex) {
+        if (calTax) {
             lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction, calTaxRate);
         }
         double[] balanceRatio = convRatio(iraBalance, age, life);
@@ -234,6 +234,18 @@ public class RothConversionCalculator {
         return rtn;
     }
 
+    StringBuffer optimalConversion(boolean calTax) {
+        double maxRoth = Double.MIN_VALUE;
+        StringBuffer best = null;
+        for (double i = 0; i < iraBegin[0] + iraBegin[1]; i += 100) {
+            double[] roth = rothBalance(fixIncome + i, calTax);
+            if ((roth[0] + roth[1]) > maxRoth) {
+                maxRoth = roth[0] + roth[1];
+                best = getDetails();
+            }
+        }
+        return best;
+    }
     double[] convRatio(double[] iraBalance, int[] age, int[] life) {
         double[] ratio = {0.5, 0.5};
         if (iraBalance[0] + iraBalance[1] > 0) {

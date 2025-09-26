@@ -30,21 +30,16 @@ public class IraRothPlanner {
             int yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
 
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome, yearBegin, payTaxInIra, born);
+            System.out.println("No optmiazation, no state tax");
             rothConversionCalculator.rothBalance(fixIncome, false);
             System.out.println(rothConversionCalculator.getDetails());
+            System.out.println("Having optmiazation, no state tax");
+            System.out.println(rothConversionCalculator.optimalConversion(false));
+            System.out.println("No optmiazation, having state tax");
             rothConversionCalculator.rothBalance(fixIncome, true);
             System.out.println(rothConversionCalculator.getDetails());
-
-            double maxRoth = Double.MIN_VALUE;
-            StringBuffer best = null;
-            for (double i = 0; i < ira[0] + ira[1]; i += 100) {
-                double[] roth = rothConversionCalculator.rothBalance(fixIncome + i, true);
-                if (roth[0] > maxRoth) {
-                    maxRoth = roth[0];
-                    best = rothConversionCalculator.getDetails();
-                }
-            }
-            System.out.println(best);
+            System.out.println("Having optmiazation, having state tax");
+            System.out.println(rothConversionCalculator.optimalConversion(true));
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
