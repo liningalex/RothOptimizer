@@ -17,6 +17,9 @@ public class IraRothPlanner {
         options.addOption("y", "yearBegin", true, "year begin to convert");
         options.addOption("p", "payTaxInIra", true, "pay tax from ira account");
         options.addOption("r", "investRtn", true, "investment return");
+        options.addOption("t", "propertyTax", true, "property tax");
+        options.addOption("m", "mortgage", true, "mortgage interest");
+        options.addOption("d", "donation", true, "donation");
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -28,8 +31,12 @@ public class IraRothPlanner {
             boolean payTaxInIra = Boolean.parseBoolean(cmd.getOptionValue("payTaxInIra", "True"));
             double investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.05"));
             int yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
+            int propertyTax = Integer.parseInt(cmd.getOptionValue("propertyTax", "0"));
+            int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
+            int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
 
-            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome, yearBegin, payTaxInIra, born);
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome,
+                    yearBegin, payTaxInIra, born, propertyTax, mortgage, donation);
             System.out.println("No optmiazation, no state tax");
             rothConversionCalculator.rothBalance(fixIncome, false);
             System.out.println(rothConversionCalculator.getDetails());

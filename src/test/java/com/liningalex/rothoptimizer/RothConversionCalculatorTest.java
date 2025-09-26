@@ -9,27 +9,31 @@ class RothConversionCalculatorTest {
     double[] ira = {100000, 180000};
     double fixIncome = 14000;
     double[] ssnIncome = {2000 * 12, 400 * 12};
+    int propertyTax = 20000;
+    int mortgage = 0;
+    int donation = 0;
 
-    RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, 0.05, age, ira, ssnIncome, 2026, true, born);
+    RothConversionCalculator rothConversionCalculator =
+            new RothConversionCalculator(fixIncome, 0.05, age, ira, ssnIncome, 2026, true, born, propertyTax, mortgage, donation);
 
     @Test
     void rothBalance() {
         double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals((long)a1[0], 217130);
+        assertEquals((long)a1[0], 216362);
         assertEquals((long)a1[1], 295665);
-        assertEquals((long)a1[2], 54538);
+        assertEquals((long)a1[2], 55306);
         double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
         assertEquals((long)a2[0], 702290);
         assertEquals((long)a2[1], 0);
         assertEquals((long)a2[2], 45153);
         double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3[0], 201276);
+        assertEquals((long)a3[0], 200508);
         assertEquals((long)a3[1], 295665);
-        assertEquals((long)a3[2], 84020);
+        assertEquals((long)a3[2], 84788);
         double[] a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4[0], 594325);
+        assertEquals((long)a4[0], 604117);
         assertEquals((long)a4[1], 0);
-        assertEquals((long)a4[2], 72112);
+        assertEquals((long)a4[2], 70546);
     }
 
     @Test
@@ -58,9 +62,9 @@ class RothConversionCalculatorTest {
 
     @Test
     void taxAmount() {
-        long f1 = rothConversionCalculator.taxAmount(100000 - rothConversionCalculator.fedDeduction(age, 100000), rothConversionCalculator.fedTaxRate);
+        long f1 = rothConversionCalculator.taxAmount(100000 - rothConversionCalculator.fedDeduction(age, 100000, true), rothConversionCalculator.fedTaxRate);
         assertEquals(f1, 7743);
-        long f2 = rothConversionCalculator.taxAmount(1000000 - rothConversionCalculator.fedDeduction(age, 1000000), rothConversionCalculator.fedTaxRate);
+        long f2 = rothConversionCalculator.taxAmount(1000000 - rothConversionCalculator.fedDeduction(age, 1000000, true), rothConversionCalculator.fedTaxRate);
         assertEquals(f2, 282407);
         long c1 = rothConversionCalculator.taxAmount(100000 - rothConversionCalculator.calDeduction, rothConversionCalculator.calTaxRate);
         assertEquals(c1, 2490);
@@ -77,8 +81,9 @@ class RothConversionCalculatorTest {
     @Test
     void fedDeduction() {
         int[] age = {65, 63};
-        long a = rothConversionCalculator.fedDeduction(age, 140000);
+        long a = rothConversionCalculator.fedDeduction(age, 140000, true);
         assertEquals(a, 39100);
-
+        long a1 = rothConversionCalculator.fedDeduction(age, 200000, true);
+        assertEquals(a1, 33100);
     }
 }

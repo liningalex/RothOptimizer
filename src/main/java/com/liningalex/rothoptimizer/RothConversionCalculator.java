@@ -81,23 +81,32 @@ public class RothConversionCalculator {
     final double investRtn;
     final double[] ssnIncome;
     final int yearBegin;
+    final int propertyTax;
+    final int mortgage;
+    final int donation;
     boolean payTaxInIra;
     StringBuffer details;
 
-    long fedDeduction(int[] age, double income) {
-        long amount = this.fedDeductionDefault;
+    long fedDeduction(int[] age, double income, boolean calTax) {
+        long stdAmount = this.fedDeductionDefault;
         for (int person = 0; person < 2; person++) {
             if (age[person] >= 65) {
-                amount += 1600;
+                stdAmount += 1600;
                 if (income < 150000)
-                    amount += 6000;
+                    stdAmount += 6000;
             }
         }
-        return amount;
+        long itemized = 0;
+        if (income < 500000) {
+            if (calTax)
+                itemized += taxAmount(income - calDeduction, calTaxRate);
+            itemized += mortgage + propertyTax + donation;
+        }
+        return Math.max(stdAmount, Math.min(40000, itemized));
     }
 
     public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome,
-                                    int yearBegin, boolean paytaxInIra, int[] born) {
+                                    int yearBegin, boolean paytaxInIra, int[] born, int propertyTax, int mortgage, int donation) {
         this.fixIncome = fixIncome;
         this.investRtn = investRtn;
         this.ageBegin = age.clone();
@@ -108,6 +117,9 @@ public class RothConversionCalculator {
         for (int person = 0; person < 2; person++) {
             this.rmdAge[person] = rmdAge(born[person]);
         }
+        this.propertyTax = propertyTax;
+        this.mortgage = mortgage;
+        this.donation = donation;
     }
 
     StringBuffer getDetails() {
@@ -151,7 +163,7 @@ public class RothConversionCalculator {
                 income += rmd[person];
             }
 
-            double taxOrig = taxAmount(income - fedDeduction(age, income), fedTaxRate);
+            double taxOrig = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
             if (calTax) {
                 taxOrig += taxAmount(income - calDeduction, calTaxRate);
             }
@@ -171,7 +183,7 @@ public class RothConversionCalculator {
             }
 
             // tax after additional  conversion.
-            double tax = taxAmount(income - fedDeduction(age, income), fedTaxRate);
+            double tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
             if (calTax) {
                 tax += taxAmount(income - calDeduction, calTaxRate);
             }
