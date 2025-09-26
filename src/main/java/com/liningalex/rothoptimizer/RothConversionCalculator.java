@@ -73,7 +73,7 @@ public class RothConversionCalculator {
     };
     public final double fedDeduction = 30000;
     public final double calDeduction = 11080;
-
+    final int[] rmdAge = new int[2];
     final int[] ageBegin;
     public final int[] life = {88, 89};
     final double[] iraBegin;
@@ -84,7 +84,8 @@ public class RothConversionCalculator {
     boolean payTaxInIra;
     StringBuffer details;
 
-    public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome, int yearBegin, boolean paytaxInIra) {
+    public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome,
+                                    int yearBegin, boolean paytaxInIra, int[] born) {
         this.fixIncome = fixIncome;
         this.investRtn = investRtn;
         this.ageBegin = age.clone();
@@ -92,12 +93,25 @@ public class RothConversionCalculator {
         this.ssnIncome = ssnIncome;
         this.yearBegin = yearBegin;
         this.payTaxInIra = paytaxInIra;
+        for (int person = 0; person < 2; person++) {
+            this.rmdAge[person] = rmdAge(born[person]);
+        }
     }
 
     StringBuffer getDetails() {
         return details;
     }
 
+    int rmdAge(int born) {
+        if (born < 1949)
+            return 70;
+        else if (born < 1951 )
+            return 71;
+        else if (born < 1960 )
+            return 73;
+        else
+            return 75;
+    }
     double[] rothBalance(double goalIncome, boolean calTex) {
         details = new StringBuffer();
         int[] age = ageBegin.clone();
@@ -235,8 +249,8 @@ public class RothConversionCalculator {
 
     long rmdAmount(int[] age, double[] ira, int person) {
         double rmd = 0;
-        if (age[person] >= 73 && ira[person] > 0) {
-            rmd = ira[person] / rmdTable[age[person] - 73];
+        if (age[person] >= rmdAge[person] && ira[person] > 0) {
+            rmd = ira[person] / rmdTable[age[person] - rmdAge[person]];
             ira[person] -= rmd;
         }
         return (long) rmd;

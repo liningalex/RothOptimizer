@@ -8,17 +8,10 @@ import java.util.Arrays;
 
 public class IraRothPlanner {
     public static void main(String[] args) {
-        int[] age;
-        double[] ira;
-        double fixIncome;
-        double[] ssnIncome;
-        boolean payTaxInIra;
-        double investRtn;
-        int yearBegin;
-
         Options options = new Options();
         options.addOption("i", "ira", true, "ira balance");
         options.addOption("a", "age", true, "ages");
+        options.addOption("b", "born", true, "born year");
         options.addOption("f", "fixIncome", true, "fix income");
         options.addOption("s", "ssnIncome", true, "ssn income at age 67");
         options.addOption("y", "yearBegin", true, "year begin to convert");
@@ -27,15 +20,16 @@ public class IraRothPlanner {
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine cmd = parser.parse(options, args);
-            age = parseArrayInt(cmd.getOptionValue("age", "{64,62}"));
-            ira = parseArrayDouble(cmd.getOptionValue("ira", "{100000,180000}"));
-            fixIncome = Double.parseDouble(cmd.getOptionValue("fixIncome", "11000"));
-            ssnIncome = parseArrayDouble(cmd.getOptionValue("ssnIncome", "{18000, 28000}"));
-            payTaxInIra = Boolean.parseBoolean(cmd.getOptionValue("payTaxInIra", "True"));
-            investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.05"));
-            yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
+            int[] age = parseArrayInt(cmd.getOptionValue("age", "{64,62}"));
+            int[] born = parseArrayInt(cmd.getOptionValue("born", "{1965,1968}"));
+            double[] ira = parseArrayDouble(cmd.getOptionValue("ira", "{100000,180000}"));
+            double fixIncome = Double.parseDouble(cmd.getOptionValue("fixIncome", "11000"));
+            double[] ssnIncome = parseArrayDouble(cmd.getOptionValue("ssnIncome", "{18000, 28000}"));
+            boolean payTaxInIra = Boolean.parseBoolean(cmd.getOptionValue("payTaxInIra", "True"));
+            double investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.05"));
+            int yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
 
-            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome, yearBegin, payTaxInIra);
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome, yearBegin, payTaxInIra, born);
             rothConversionCalculator.rothBalance(fixIncome, false);
             System.out.println(rothConversionCalculator.getDetails());
             rothConversionCalculator.rothBalance(fixIncome, true);

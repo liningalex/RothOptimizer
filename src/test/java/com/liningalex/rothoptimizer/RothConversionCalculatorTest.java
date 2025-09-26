@@ -5,26 +5,27 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RothConversionCalculatorTest {
     int[] age = {62, 59};
+    int[] born = {1968, 1970};
     double[] ira = {100000, 180000};
     double fixIncome = 14000;
     double[] ssnIncome = {2000 * 12, 400 * 12};
 
-    RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, 0.05, age, ira, ssnIncome, 2026, true);
+    RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, 0.05, age, ira, ssnIncome, 2026, true, born);
 
     @Test
     void rothBalance() {
         double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals((long)a1[0], 168051);
-        assertEquals((long)a1[1], 311319);
-        assertEquals((long)a1[2], 75474);
+        assertEquals((long)a1[0], 216002);
+        assertEquals((long)a1[1], 295665);
+        assertEquals((long)a1[2], 88219);
         double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
         assertEquals((long)a2[0], 700229);
         assertEquals((long)a2[1], 0);
         assertEquals((long)a2[2], 70953);
         double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3[0], 157960);
-        assertEquals((long)a3[1], 311319);
-        assertEquals((long)a3[2], 99470);
+        assertEquals((long)a3[0], 200148);
+        assertEquals((long)a3[1], 295665);
+        assertEquals((long)a3[2], 117701);
         double[] a4 = rothConversionCalculator.rothBalance(360000, true);
         assertEquals((long)a4[0], 592063);
         assertEquals((long)a4[1], 0);
@@ -41,7 +42,7 @@ class RothConversionCalculatorTest {
 
     @Test
     void rmdAmount() {
-        int[] age = {73, 0};
+        int[] age = {75, 0};
         double[] ira = {1000000, 0};
         long a = rothConversionCalculator.rmdAmount(age, ira, 0);
         assertEquals(a, 37735);
