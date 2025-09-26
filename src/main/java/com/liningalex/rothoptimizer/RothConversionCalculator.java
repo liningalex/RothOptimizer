@@ -71,7 +71,7 @@ public class RothConversionCalculator {
             10.8, 10.1, 9.5, 8.9, 8.4, 7.8, 7.3, 6.8, 6.4, 6.0, 5.6, 5.2
 
     };
-    public final double fedDeduction = 30000;
+    public final long fedDeductionDefault = 31500;
     public final double calDeduction = 11080;
     final int[] rmdAge = new int[2];
     final int[] ageBegin;
@@ -83,6 +83,18 @@ public class RothConversionCalculator {
     final int yearBegin;
     boolean payTaxInIra;
     StringBuffer details;
+
+    long fedDeduction(int[] age, double income) {
+        long amount = this.fedDeductionDefault;
+        for (int person = 0; person < 2; person++) {
+            if (age[person] >= 65) {
+                amount += 1600;
+                if (income < 150000)
+                    amount += 6000;
+            }
+        }
+        return amount;
+    }
 
     public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome,
                                     int yearBegin, boolean paytaxInIra, int[] born) {
@@ -138,7 +150,7 @@ public class RothConversionCalculator {
                 income += rmd[person];
             }
 
-            double taxOrig = taxAmount(income - fedDeduction, fedTaxRate);
+            double taxOrig = taxAmount(income - fedDeduction(age, income), fedTaxRate);
             if (calTex) {
                 taxOrig += taxAmount(income - calDeduction, calTaxRate);
             }
@@ -158,7 +170,7 @@ public class RothConversionCalculator {
             }
 
             // tax after additional  conversion.
-            double tax = taxAmount(income - fedDeduction, fedTaxRate);
+            double tax = taxAmount(income - fedDeduction(age, income), fedTaxRate);
             if (calTex) {
                 tax += taxAmount(income - calDeduction, calTaxRate);
             }
@@ -202,7 +214,7 @@ public class RothConversionCalculator {
             }
 
         }
-        double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeduction, fedTaxRate);
+        double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate);
         if (calTex) {
             lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction, calTaxRate);
         }
