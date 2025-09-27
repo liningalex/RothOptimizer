@@ -19,29 +19,29 @@ class RothConversionCalculatorTest {
     @Test
     void rothBalance() {
         double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals((long)a1[0], 216362);
-        assertEquals((long)a1[1], 295665);
-        assertEquals((long)a1[2], 50414);
+        assertEquals((long)a1[0], 216331);
+        assertEquals((long)a1[1], 292874);
+        assertEquals((long)a1[2], 70517);
         double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals((long)a2[0], 702290);
+        assertEquals((long)a2[0], 699828);
         assertEquals((long)a2[1], 0);
-        assertEquals((long)a2[2], 45153);
+        assertEquals((long)a2[2], 94316);
         double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3[0], 204016);
-        assertEquals((long)a3[1], 295665);
-        assertEquals((long)a3[2], 64065);
+        assertEquals((long)a3[0], 203967);
+        assertEquals((long)a3[1], 292536);
+        assertEquals((long)a3[2], 86532);
         double[] a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4[0], 607888);
+        assertEquals((long)a4[0], 604516);
         assertEquals((long)a4[1], 0);
-        assertEquals((long)a4[2], 60980);
+        assertEquals((long)a4[2], 127152);
     }
 
     @Test
-    void balanceRatio() {
+    void convRatio() {
         final int[] life = {88, 89};
         double[] a = rothConversionCalculator.convRatio(ira, age, life);
-        assertEquals(a[0], 0.40983606557377045);
-        assertEquals(a[1], 0.5901639344262294);;
+        assertEquals(a[0], 0.40284360189573465);
+        assertEquals(a[1], 0.5971563981042655);;
     }
 
     @Test

@@ -37,15 +37,18 @@ public class IraRothPlanner {
 
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome,
                     yearBegin, payTaxInIra, born, propertyTax, mortgage, donation);
-            System.out.println("No optmiazation, no state tax");
+            /*System.out.println("No optmiazation, no state tax");
             rothConversionCalculator.rothBalance(fixIncome, false);
             System.out.println(rothConversionCalculator.getDetails());
             System.out.println("Having optmiazation, no state tax");
-            System.out.println(rothConversionCalculator.optimalConversion(false));
+            System.out.println(rothConversionCalculator.optimalConversion(false));*/
             System.out.println("No optmiazation, having state tax");
             rothConversionCalculator.rothBalance(fixIncome, true);
             System.out.println(rothConversionCalculator.getDetails());
             System.out.println("Having optmiazation, having state tax");
+            System.out.println(rothConversionCalculator.optimalConversion(true));
+            System.out.println("Having optmiazation, having state tax, pay tax not in Ira");
+            rothConversionCalculator.setPayTaxInIra(false);
             System.out.println(rothConversionCalculator.optimalConversion(true));
         } catch (ParseException e) {
             throw new RuntimeException(e);

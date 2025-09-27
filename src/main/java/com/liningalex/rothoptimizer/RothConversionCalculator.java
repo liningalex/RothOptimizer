@@ -137,6 +137,10 @@ public class RothConversionCalculator {
         return details;
     }
 
+    void setPayTaxInIra(boolean payTaxInIra) {
+        this.payTaxInIra = payTaxInIra;
+    }
+
     int rmdAge(int born) {
         if (born < 1949)
             return 70;
@@ -180,17 +184,19 @@ public class RothConversionCalculator {
                 income += rmd[person];
             }
 
+            // original tax amount.
             double taxOrig = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
             if (calTax) {
                 taxOrig += taxAmount(income - calDeduction(age), calTaxRate);
             }
 
+            // amount to convert is max of ira balance.
             double convertAmount = Math.min(goalIncome - income, Math.max(0, iraBalance[0] + iraBalance[1]));
-            double[] balanceRatio = convRatio(iraBalance, age, life);
+            double[] convRatio = convRatio(iraBalance, age, life);
             for (int person = 0; person < 2; person++) {
                 if (convertAmount > 0) {
                     if (iraBalance[person] > 0) {
-                        double conv = balanceRatio[person] * convertAmount;
+                        double conv = convRatio[person] * convertAmount;
                         conv = Math.min(iraBalance[person], conv);
                         iraBalance[person] -= conv;
                         toRoth[person] += conv;
@@ -199,43 +205,53 @@ public class RothConversionCalculator {
                 }
             }
 
-            // tax after additional  conversion.
+            // tax amount with updated income.
             double tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
             if (calTax) {
                 tax += taxAmount(income - calDeduction(age), calTaxRate);
             }
-            totalTax += tax;
 
-            if (iraBalance[0] + iraBalance[1] > 0) {
-                balanceRatio = convRatio(iraBalance, age, life);
-            }
             for (int person = 0; person < 2; person++) {
+                // rmd amount can't be converted to Roth, keet it separated.
                 rmdBalance[person] += rmd[person];
-                // pay additional tax from rmd account
+                // amount to convert to Roth.
+                rothBalance[person] += toRoth[person];
+                // now additional money is needed for paying tax caused by conversion.
                 if (payTaxInIra) {
-                    rmdBalance[person] -= (tax - taxOrig) * balanceRatio[person];
-                    rmdBalance[person] -= (tax - taxOrig) * balanceRatio[person] * tax / income;
+                    double amountPayTax = (tax - taxOrig) * convRatio[person];
+                    amountPayTax += (tax - taxOrig) * convRatio[person] * tax / income;
+                    // medicare preminus
+                    amountPayTax += (medicare[person] = medicarePreminus(age, income, person));
+                    income += amountPayTax;
+                    // pay the amount in rmd account.
+                    rmdBalance[person] -= amountPayTax;
                 }
-                // pay medicare preminus from rmd account
-                rmdBalance[person] -= (medicare[person] = medicarePreminus(age, income, person));
                 if (rmdBalance[person] < 0) {
-                    // move money from ira to rmd.
+                    // pay the amount in ira account.
                     iraBalance[person] += rmdBalance[person];
                     rmdBalance[person] = 0;
-                    // move money from roth to ira.
                     if (iraBalance[person] < 0) {
+                        // pay the amount in roth account.
                         rothBalance[person] += iraBalance[person];
+                        toRoth[person] += iraBalance[person];
+                        // this amount is tax free, so reduce income.
+                        income += iraBalance[person];
                         iraBalance[person] = 0;
                     }
                 }
-                rothBalance[person] += toRoth[person];
+                // tax with final updated income.
+                tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
+                if (calTax) {
+                    tax += taxAmount(income - calDeduction(age), calTaxRate);
+                }
+                totalTax += tax;
             }
 
             details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),conv=(%.0f,%.0f), income=%.0f," +
-                            "medicare=%.0f,tax=%.0f,taxRate=%.0f",
+                            "medicare=%.0f,tax=%.0f,taxRate=%.1f",
                     year, age[0], age[1], iraBalance[0], iraBalance[1], rothBalance[0], rothBalance[1], rmd[0], rmd[1], toRoth[0], toRoth[1], income,
                     medicare[0] + medicare[1], tax, tax / income * 100)).append("\n");
-            // add investment return;
+            // investment return;
             for (int person = 0; person < 2; person++) {
                 age[person]++;
                 iraBalance[person] *= (1 + investRtn);
@@ -248,9 +264,9 @@ public class RothConversionCalculator {
         if (calTax) {
             lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age), calTaxRate);
         }
-        double[] balanceRatio = convRatio(iraBalance, age, life);
+        double[] convRatio = convRatio(iraBalance, age, life);
         for (int person = 0; person < 2; person++) {
-            iraBalance[person] -= lastTax * balanceRatio[person];
+            iraBalance[person] -= lastTax * convRatio[person];
             rothBalance[person] += iraBalance[person];
             iraBalance[person] = 0;
         }
@@ -281,8 +297,8 @@ public class RothConversionCalculator {
         if (iraBalance[0] + iraBalance[1] > 0) {
             if (age[0] <= life[0] && age[1] <= life[1]) {
                 double[] ave = new double[2];
-                ave[0] = iraBalance[0] / ((age[0] < 73 ? 73 : life[0]) - age[0] + 1);
-                ave[1] = iraBalance[1] / ((age[1] < 73 ? 73 : life[1]) - age[1] + 1);
+                ave[0] = iraBalance[0] / ((age[0] < rmdAge[0] ? rmdAge[0] : life[0]) - age[0] + 1);
+                ave[1] = iraBalance[1] / ((age[1] < rmdAge[1] ? rmdAge[1] : life[1]) - age[1] + 1);
 
                 ratio[0] = ave[0] / (ave[0] + ave[1]);
                 ratio[1] = ave[1] / (ave[0] + ave[1]);
