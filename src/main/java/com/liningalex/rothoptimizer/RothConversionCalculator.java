@@ -99,14 +99,21 @@ public class RothConversionCalculator {
         long itemized = 0;
         if (income < 500000) {
             if (calTax)
-                itemized += taxAmount(income - calDeduction(), calTaxRate);
+                itemized += taxAmount(income - calDeduction(age), calTaxRate);
             itemized += mortgage + propertyTax + donation;
         }
-        return Math.max(stdAmount, Math.min(40000, itemized));
+        double ssnDeduction = ssnIncome(age, 0) + ssnIncome(age, 1);
+        if (income > 44000)
+            ssnDeduction *= 0.15;
+        else if (income > 32000)
+            ssnDeduction *= 0.5;
+
+        return Math.max(stdAmount, Math.min(40000, itemized)) + (long)ssnDeduction;
     }
 
-    long calDeduction() {
-        return Math.max(calDeductionDefault, donation + mortgage + propertyTax);
+    long calDeduction(int[] age) {
+        double ssnIncome = ssnIncome(age, 0) + ssnIncome(age, 1);
+        return Math.max(calDeductionDefault, donation + mortgage + propertyTax) + (long) ssnIncome;
     }
 
     public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome,
@@ -141,6 +148,13 @@ public class RothConversionCalculator {
             return 75;
     }
 
+    double ssnIncome(int[] age, int person) {
+        if (age[person] >= 67) {
+            return ssnIncome[person];
+        } else
+            return 0;
+    }
+
     double[] rothBalance(double goalIncome, boolean calTax) {
         details = new StringBuffer();
         int[] age = ageBegin.clone();
@@ -159,9 +173,8 @@ public class RothConversionCalculator {
                     continue;
                 }
                 // social security income
-                if (age[person] >= 67) {
-                    income += ssnIncome[person];
-                }
+                income += ssnIncome(age, person);
+
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 iraBalance[person] -= rmd[person];
                 income += rmd[person];
@@ -169,7 +182,7 @@ public class RothConversionCalculator {
 
             double taxOrig = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
             if (calTax) {
-                taxOrig += taxAmount(income - calDeduction(), calTaxRate);
+                taxOrig += taxAmount(income - calDeduction(age), calTaxRate);
             }
 
             double convertAmount = Math.min(goalIncome - income, Math.max(0, iraBalance[0] + iraBalance[1]));
@@ -189,7 +202,7 @@ public class RothConversionCalculator {
             // tax after additional  conversion.
             double tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
             if (calTax) {
-                tax += taxAmount(income - calDeduction(), calTaxRate);
+                tax += taxAmount(income - calDeduction(age), calTaxRate);
             }
             totalTax += tax;
 
@@ -233,7 +246,7 @@ public class RothConversionCalculator {
         }
         double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate);
         if (calTax) {
-            lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(), calTaxRate);
+            lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age), calTaxRate);
         }
         double[] balanceRatio = convRatio(iraBalance, age, life);
         for (int person = 0; person < 2; person++) {
