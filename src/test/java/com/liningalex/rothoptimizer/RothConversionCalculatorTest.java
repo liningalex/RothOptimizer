@@ -18,22 +18,22 @@ class RothConversionCalculatorTest {
 
     @Test
     void rothBalance() {
-        double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals((long)a1[0], 245198);
-        assertEquals((long)a1[1], 458132);
-        assertEquals((long)a1[2], 62174);
-        double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals((long)a2[0], 980978);
-        assertEquals((long)a2[1], 0);
-        assertEquals((long)a2[2], 48694);
-        double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3[0], 226645);
-        assertEquals((long)a3[1], 458132);
-        assertEquals((long)a3[2], 82630);
-        double[] a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4[0], 885666);
-        assertEquals((long)a4[1], 0);
-        assertEquals((long)a4[2], 65564);
+        RothConvResults a1 = rothConversionCalculator.rothBalance(fixIncome, false);
+        assertEquals((long)a1.roth, 245198);
+        assertEquals((long)a1.rmd, 458132);
+        assertEquals((long)a1.totalTax, 62174);
+        RothConvResults a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
+        assertEquals((long)a2.roth, 980978);
+        assertEquals((long)a2.rmd, 0);
+        assertEquals((long)a2.totalTax, 48694);
+        RothConvResults a3 = rothConversionCalculator.rothBalance(fixIncome, true);
+        assertEquals((long)a3.roth, 226645);
+        assertEquals((long)a3.rmd, 458132);
+        assertEquals((long)a3.totalTax, 82630);
+        RothConvResults a4 = rothConversionCalculator.rothBalance(360000, true);
+        assertEquals((long)a4.roth, 885666);
+        assertEquals((long)a4.rmd, 0);
+        assertEquals((long)a4.totalTax, 65564);
     }
 
     @Test

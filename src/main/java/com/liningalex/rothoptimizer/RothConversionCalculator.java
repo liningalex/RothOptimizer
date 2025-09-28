@@ -1,5 +1,8 @@
 package com.liningalex.rothoptimizer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RothConversionCalculator {
 
     public final double[][] fedTaxRate = {
@@ -85,7 +88,6 @@ public class RothConversionCalculator {
     final int mortgage;
     final int donation;
     boolean payTaxInIra;
-    StringBuffer details;
 
     long fedDeduction(int[] age, double income, boolean calTax) {
         long stdAmount = this.fedDeductionDefault;
@@ -132,10 +134,7 @@ public class RothConversionCalculator {
         this.mortgage = mortgage;
         this.donation = donation;
     }
-
-    StringBuffer getDetails() {
-        return details;
-    }
+    
 
     void setPayTaxInIra(boolean payTaxInIra) {
         this.payTaxInIra = payTaxInIra;
@@ -159,15 +158,14 @@ public class RothConversionCalculator {
             return 0;
     }
 
-    double[] rothBalance(double goalIncome, boolean calTax) {
-        details = new StringBuffer();
+    RothConvResults rothBalance(double goalIncome, boolean calTax) {
         int[] age = ageBegin.clone();
         double[] iraBalance = iraBegin.clone();
         double totalTax = 0;
         double[] rothBalance = new double[2];
         double[] rmdBalance = new double[2];
         double[] rmd = new double[2];
-
+        List<RothConvResults.YearConvResults> yearConvResultsList = new ArrayList<>();
         for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
             double income = fixIncome;
             double[] toRoth = new double[2];
@@ -256,10 +254,7 @@ public class RothConversionCalculator {
                 medicare[person] = medicarePreminus(age, income, person);
             }
 
-            details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),conv=(%.0f,%.0f), income=%.0f," +
-                            "medicare=%.0f,tax=%.0f,taxRate=%.1f",
-                    year, age[0], age[1], iraBalance[0], iraBalance[1], rothBalance[0], rothBalance[1], rmd[0], rmd[1], toRoth[0], toRoth[1], income,
-                    medicare[0] + medicare[1], tax, tax / income * 100)).append("\n");
+            yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, income, tax));
             // investment return;
             for (int person = 0; person < 2; person++) {
                 age[person]++;
@@ -280,23 +275,20 @@ public class RothConversionCalculator {
             iraBalance[person] = 0;
         }
 
-        details.append(String.format("income=%.0f,roth=%.0f,rmd=%.0f,lastTax=%.0f,totalTax=%.0f",
-                goalIncome, rothBalance[0] + rothBalance[1], rmdBalance[0] + rmdBalance[1], lastTax, totalTax + lastTax)).append("\n");
-        double[] rtn = new double[3];
-        rtn[0] = rothBalance[0] + rothBalance[1];
-        rtn[1] = rmdBalance[0] + rmdBalance[1];
-        rtn[2] = totalTax + lastTax;
-        return rtn;
+        RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, goalIncome, rothBalance[0] + rothBalance[1],
+                rmdBalance[0] + rmdBalance[1], lastTax, totalTax + lastTax);
+        
+        return rothConvResults;
     }
 
-    StringBuffer optimalConversion(boolean calTax) {
+    RothConvResults optimalConversion(boolean calTax) {
         double maxRoth = Double.MIN_VALUE;
-        StringBuffer best = null;
+        RothConvResults best = null;
         for (double i = 0; i < iraBegin[0] + iraBegin[1]; i += 100) {
-            double[] roth = rothBalance(fixIncome + i, calTax);
-            if ((roth[0] + roth[1]) > maxRoth) {
-                maxRoth = roth[0] + roth[1];
-                best = getDetails();
+            RothConvResults results = rothBalance(fixIncome + i, calTax);
+            if (results.roth > maxRoth) {
+                maxRoth = results.roth;
+                best = results;
             }
         }
         return best;
@@ -322,6 +314,9 @@ public class RothConversionCalculator {
         } else if (iraBalance[0] > 0) {
             ratio[0] = 1;
             ratio[1] = 0;
+        } else if (iraBalance[1] > 0) {
+            ratio[0] = 0;
+            ratio[1] = 1;
         }
         return ratio;
 

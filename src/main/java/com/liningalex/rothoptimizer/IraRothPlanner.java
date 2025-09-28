@@ -43,8 +43,7 @@ public class IraRothPlanner {
             System.out.println("Having optmiazation, no state tax");
             System.out.println(rothConversionCalculator.optimalConversion(false));*/
             System.out.println("No optmiazation, having state tax");
-            rothConversionCalculator.rothBalance(fixIncome, true);
-            System.out.println(rothConversionCalculator.getDetails());
+            System.out.println(rothConversionCalculator.rothBalance(fixIncome, true));
             System.out.println("Having optmiazation, having state tax");
             System.out.println(rothConversionCalculator.optimalConversion(true));
             System.out.println("Having optmiazation, having state tax, pay tax not in Ira");
