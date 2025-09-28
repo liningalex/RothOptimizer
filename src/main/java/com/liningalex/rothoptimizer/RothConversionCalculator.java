@@ -54,7 +54,7 @@ public class RothConversionCalculator {
             {
                     9.3, 141213
             },
-            {       10.3, 721319
+            {10.3, 721319
             },
             {
                     11.3, 865575
@@ -108,7 +108,7 @@ public class RothConversionCalculator {
         else if (income > 32000)
             ssnDeduction *= 0.5;
 
-        return Math.max(stdAmount, Math.min(40000, itemized)) + (long)ssnDeduction;
+        return Math.max(stdAmount, Math.min(40000, itemized)) + (long) ssnDeduction;
     }
 
     long calDeduction(int[] age) {
@@ -144,9 +144,9 @@ public class RothConversionCalculator {
     int rmdAge(int born) {
         if (born < 1949)
             return 70;
-        else if (born < 1951 )
+        else if (born < 1951)
             return 71;
-        else if (born < 1960 )
+        else if (born < 1960)
             return 73;
         else
             return 75;
@@ -167,11 +167,12 @@ public class RothConversionCalculator {
         double[] rothBalance = new double[2];
         double[] rmdBalance = new double[2];
         double[] rmd = new double[2];
-        double[] medicare = new double[2];
+
         for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
             double income = fixIncome;
             double[] toRoth = new double[2];
-
+            double[] medicareOrig = new double[2];
+            double[] medicare = new double[2];
             for (int person = 0; person < 2; person++) {
                 if (age[person] >= life[person]) {
                     continue;
@@ -182,6 +183,7 @@ public class RothConversionCalculator {
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 iraBalance[person] -= rmd[person];
                 income += rmd[person];
+                medicareOrig[person] = medicarePreminus(age, income, person);
             }
 
             // original tax amount.
@@ -212,6 +214,10 @@ public class RothConversionCalculator {
             }
 
             for (int person = 0; person < 2; person++) {
+                medicare[person] = medicarePreminus(age, income, person);
+            }
+
+            for (int person = 0; person < 2; person++) {
                 // rmd amount can't be converted to Roth, keet it separated.
                 rmdBalance[person] += rmd[person];
                 // amount to convert to Roth.
@@ -220,8 +226,10 @@ public class RothConversionCalculator {
                 if (payTaxInIra) {
                     double amountPayTax = (tax - taxOrig) * convRatio[person];
                     amountPayTax += (tax - taxOrig) * convRatio[person] * tax / income;
-                    // medicare preminus
-                    amountPayTax += (medicare[person] = medicarePreminus(age, income, person));
+
+                    amountPayTax += medicare[person] - medicareOrig[person];
+                    amountPayTax += (medicare[person] - medicareOrig[person]) * convRatio[person] * tax/income;
+                    
                     income += amountPayTax;
                     // pay the amount in rmd account.
                     rmdBalance[person] -= amountPayTax;
@@ -239,13 +247,18 @@ public class RothConversionCalculator {
                         iraBalance[person] = 0;
                     }
                 }
-                // tax with final updated income.
-                tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
-                if (calTax) {
-                    tax += taxAmount(income - calDeduction(age), calTaxRate);
-                }
-                totalTax += tax;
             }
+            // tax with final updated income.
+            tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
+            if (calTax) {
+                tax += taxAmount(income - calDeduction(age), calTaxRate);
+            }
+            totalTax += tax;
+            // medicare with the final income.
+            for (int person = 0; person < 2; person++) {
+                medicare[person] = medicarePreminus(age, income, person);
+            }
+
 
             details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),conv=(%.0f,%.0f), income=%.0f," +
                             "medicare=%.0f,tax=%.0f,taxRate=%.1f",
@@ -292,6 +305,7 @@ public class RothConversionCalculator {
         }
         return best;
     }
+
     double[] convRatio(double[] iraBalance, int[] age, int[] life) {
         double[] ratio = {0.5, 0.5};
         if (iraBalance[0] + iraBalance[1] > 0) {

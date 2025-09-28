@@ -19,21 +19,21 @@ class RothConversionCalculatorTest {
     @Test
     void rothBalance() {
         double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals((long)a1[0], 216331);
-        assertEquals((long)a1[1], 292874);
-        assertEquals((long)a1[2], 70517);
+        assertEquals((long)a1[0], 245198);
+        assertEquals((long)a1[1], 474950);
+        assertEquals((long)a1[2], 62174);
         double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals((long)a2[0], 699828);
+        assertEquals((long)a2[0], 968759);
         assertEquals((long)a2[1], 0);
-        assertEquals((long)a2[2], 94316);
+        assertEquals((long)a2[2], 48694);
         double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3[0], 203967);
-        assertEquals((long)a3[1], 292536);
-        assertEquals((long)a3[2], 86532);
+        assertEquals((long)a3[0], 229323);
+        assertEquals((long)a3[1], 474950);
+        assertEquals((long)a3[2], 79653);
         double[] a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4[0], 604516);
+        assertEquals((long)a4[0], 873447);
         assertEquals((long)a4[1], 0);
-        assertEquals((long)a4[2], 127152);
+        assertEquals((long)a4[2], 65564);
     }
 
     @Test
