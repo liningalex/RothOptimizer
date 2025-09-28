@@ -20,18 +20,18 @@ class RothConversionCalculatorTest {
     void rothBalance() {
         double[] a1 = rothConversionCalculator.rothBalance(fixIncome, false);
         assertEquals((long)a1[0], 245198);
-        assertEquals((long)a1[1], 474950);
+        assertEquals((long)a1[1], 458132);
         assertEquals((long)a1[2], 62174);
         double[] a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals((long)a2[0], 968759);
+        assertEquals((long)a2[0], 980978);
         assertEquals((long)a2[1], 0);
         assertEquals((long)a2[2], 48694);
         double[] a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3[0], 229323);
-        assertEquals((long)a3[1], 474950);
-        assertEquals((long)a3[2], 79653);
+        assertEquals((long)a3[0], 226645);
+        assertEquals((long)a3[1], 458132);
+        assertEquals((long)a3[2], 82630);
         double[] a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4[0], 873447);
+        assertEquals((long)a4[0], 885666);
         assertEquals((long)a4[1], 0);
         assertEquals((long)a4[2], 65564);
     }

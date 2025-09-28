@@ -153,7 +153,7 @@ public class RothConversionCalculator {
     }
 
     double ssnIncome(int[] age, int person) {
-        if (age[person] >= 67) {
+        if (age[person] >= 67 && age[person] < life[person]) {
             return ssnIncome[person];
         } else
             return 0;
@@ -174,12 +174,9 @@ public class RothConversionCalculator {
             double[] medicareOrig = new double[2];
             double[] medicare = new double[2];
             for (int person = 0; person < 2; person++) {
-                if (age[person] >= life[person]) {
-                    continue;
-                }
                 // social security income
                 income += ssnIncome(age, person);
-
+                // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 iraBalance[person] -= rmd[person];
                 income += rmd[person];
@@ -259,7 +256,6 @@ public class RothConversionCalculator {
                 medicare[person] = medicarePreminus(age, income, person);
             }
 
-
             details.append(String.format("Year=%d, age=(%d,%d),ira=(%.0f,%.0f),roth=(%.0f,%.0f),rmd=(%.0f,%.0f),conv=(%.0f,%.0f), income=%.0f," +
                             "medicare=%.0f,tax=%.0f,taxRate=%.1f",
                     year, age[0], age[1], iraBalance[0], iraBalance[1], rothBalance[0], rothBalance[1], rmd[0], rmd[1], toRoth[0], toRoth[1], income,
@@ -333,7 +329,7 @@ public class RothConversionCalculator {
 
     long rmdAmount(int[] age, double[] ira, int person) {
         double rmd = 0;
-        if (age[person] >= rmdAge[person] && ira[person] > 0) {
+        if (age[person] >= rmdAge[person] && ira[person] > 0 && age[person] < life[person]) {
             rmd = ira[person] / rmdTable[age[person] - rmdAge[person]];
             ira[person] -= rmd;
         }
@@ -342,7 +338,7 @@ public class RothConversionCalculator {
 
     long medicarePreminus(int[] age, double income, int person) {
         double preminus = 0;
-        if (age[person] >= 65) {
+        if (age[person] >= 65 && age[person] < life[person]) {
             for (int i = 0; i < irmaaTbl.length; i++) {
                 if (income <= irmaaTbl[i][0]) {
                     return (long) (irmaaTbl[i][1] + irmaaTbl[i][2]) * 12;
