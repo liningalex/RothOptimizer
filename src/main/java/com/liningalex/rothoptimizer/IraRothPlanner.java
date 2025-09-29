@@ -10,7 +10,6 @@ public class IraRothPlanner {
     public static void main(String[] args) {
         Options options = new Options();
         options.addOption("i", "ira", true, "ira balance");
-        options.addOption("a", "age", true, "ages");
         options.addOption("b", "born", true, "born year");
         options.addOption("f", "fixIncome", true, "fix income");
         options.addOption("s", "ssnIncome", true, "ssn income at age 67");
@@ -23,7 +22,6 @@ public class IraRothPlanner {
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine cmd = parser.parse(options, args);
-            int[] age = parseArrayInt(cmd.getOptionValue("age", "{64,62}"));
             int[] born = parseArrayInt(cmd.getOptionValue("born", "{1965,1968}"));
             double[] ira = parseArrayDouble(cmd.getOptionValue("ira", "{100000,180000}"));
             double fixIncome = Double.parseDouble(cmd.getOptionValue("fixIncome", "11000"));
@@ -35,7 +33,7 @@ public class IraRothPlanner {
             int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
             int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
 
-            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, age, ira, ssnIncome,
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, ira, ssnIncome,
                     yearBegin, payTaxInIra, born, propertyTax, mortgage, donation);
             /*System.out.println("No optmiazation, no state tax");
             rothConversionCalculator.rothBalance(fixIncome, false);

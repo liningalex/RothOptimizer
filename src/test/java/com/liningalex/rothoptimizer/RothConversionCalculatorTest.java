@@ -4,8 +4,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RothConversionCalculatorTest {
-    int[] age = {62, 59};
+    int yearBegin = 2026;
     int[] born = {1968, 1970};
+    int[] age = {yearBegin - born[0], yearBegin - born[1]};
     double[] ira = {100000, 180000};
     double fixIncome = 14000;
     double[] ssnIncome = {2000 * 12, 400 * 12};
@@ -14,24 +15,24 @@ class RothConversionCalculatorTest {
     int donation = 0;
 
     RothConversionCalculator rothConversionCalculator =
-            new RothConversionCalculator(fixIncome, 0.05, age, ira, ssnIncome, 2026, true, born, propertyTax, mortgage, donation);
+            new RothConversionCalculator(fixIncome, 0.05, ira, ssnIncome, yearBegin, true, born, propertyTax, mortgage, donation);
 
     @Test
     void rothBalance() {
         RothConvResults a1 = rothConversionCalculator.rothBalance(fixIncome, false);
-        assertEquals((long)a1.roth, 245198);
-        assertEquals((long)a1.rmd, 458132);
-        assertEquals((long)a1.totalTax, 62174);
+        assertEquals((long)a1.roth, 280398);
+        assertEquals((long)a1.rmd, 530351);
+        assertEquals((long)a1.totalTax, 78887);
         RothConvResults a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals((long)a2.roth, 980978);
+        assertEquals((long)a2.roth, 1126952);
         assertEquals((long)a2.rmd, 0);
         assertEquals((long)a2.totalTax, 48694);
         RothConvResults a3 = rothConversionCalculator.rothBalance(fixIncome, true);
-        assertEquals((long)a3.roth, 226645);
-        assertEquals((long)a3.rmd, 458132);
-        assertEquals((long)a3.totalTax, 82630);
+        assertEquals((long)a3.roth, 257538);
+        assertEquals((long)a3.rmd, 530351);
+        assertEquals((long)a3.totalTax, 104223);
         RothConvResults a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4.roth, 885666);
+        assertEquals((long)a4.roth, 1013441);
         assertEquals((long)a4.rmd, 0);
         assertEquals((long)a4.totalTax, 65564);
     }
@@ -40,8 +41,8 @@ class RothConversionCalculatorTest {
     void convRatio() {
         final int[] life = {88, 89};
         double[] a = rothConversionCalculator.convRatio(ira, age, life);
-        assertEquals(a[0], 0.40284360189573465);
-        assertEquals(a[1], 0.5971563981042655);;
+        assertEquals(a[0], 0.3816793893129771);
+        assertEquals(a[1], 0.6183206106870229);;
     }
 
     @Test

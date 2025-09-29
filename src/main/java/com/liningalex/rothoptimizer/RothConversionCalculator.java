@@ -77,7 +77,7 @@ public class RothConversionCalculator {
     public final long fedDeductionDefault = 31500;
     public final long calDeductionDefault = 11080;
     final int[] rmdAge = new int[2];
-    final int[] ageBegin;
+    final int[] born;
     public final int[] life = {88, 89};
     final double[] iraBegin;
     final double fixIncome;
@@ -118,15 +118,15 @@ public class RothConversionCalculator {
         return Math.max(calDeductionDefault, donation + mortgage + propertyTax) + (long) ssnIncome;
     }
 
-    public RothConversionCalculator(double fixIncome, double investRtn, int[] age, double[] ira, double[] ssnIncome,
+    public RothConversionCalculator(double fixIncome, double investRtn, double[] ira, double[] ssnIncome,
                                     int yearBegin, boolean paytaxInIra, int[] born, int propertyTax, int mortgage, int donation) {
         this.fixIncome = fixIncome;
         this.investRtn = investRtn;
-        this.ageBegin = age.clone();
         this.iraBegin = ira.clone();
         this.ssnIncome = ssnIncome;
         this.yearBegin = yearBegin;
         this.payTaxInIra = paytaxInIra;
+        this.born = born;
         for (int person = 0; person < 2; person++) {
             this.rmdAge[person] = rmdAge(born[person]);
         }
@@ -159,7 +159,7 @@ public class RothConversionCalculator {
     }
 
     RothConvResults rothBalance(double goalIncome, boolean calTax) {
-        int[] age = ageBegin.clone();
+        int[] age = {yearBegin - born[0], yearBegin - born[1]};
         double[] iraBalance = iraBegin.clone();
         double totalTax = 0;
         double[] rothBalance = new double[2];
