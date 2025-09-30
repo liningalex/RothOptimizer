@@ -10,12 +10,13 @@ class RothConversionCalculatorTest {
     double[] ira = {100000, 180000};
     double fixIncome = 14000;
     double[] ssnIncome = {2000 * 12, 400 * 12};
+    int[] ssnAge = {67,67};
     int propertyTax = 20000;
     int mortgage = 0;
     int donation = 0;
 
     RothConversionCalculator rothConversionCalculator =
-            new RothConversionCalculator(fixIncome, 0.05, ira, ssnIncome, yearBegin, true, born, propertyTax, mortgage, donation);
+            new RothConversionCalculator(fixIncome, 0.05, ira, ssnIncome, ssnAge, yearBegin, true, born, propertyTax, mortgage, donation);
 
     @Test
     void rothBalance() {
@@ -35,6 +36,11 @@ class RothConversionCalculatorTest {
         assertEquals((long)a4.roth, 1013441);
         assertEquals((long)a4.rmd, 0);
         assertEquals((long)a4.totalTax, 65564);
+
+        RothConvResults a = rothConversionCalculator.optimalConversion(true);
+        assertEquals(a.roth, 1336040.9590248144);
+        assertEquals(a.rmd, 208.54572395666625);
+        assertEquals(a.totalTax, 16577.0);
     }
 
     @Test

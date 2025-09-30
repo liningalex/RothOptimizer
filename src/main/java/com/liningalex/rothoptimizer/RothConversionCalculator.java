@@ -83,6 +83,7 @@ public class RothConversionCalculator {
     final double fixIncome;
     final double investRtn;
     final double[] ssnIncome;
+    final int[] ssnAge;
     final int yearBegin;
     final int propertyTax;
     final int mortgage;
@@ -118,12 +119,13 @@ public class RothConversionCalculator {
         return Math.max(calDeductionDefault, donation + mortgage + propertyTax) + (long) ssnIncome;
     }
 
-    public RothConversionCalculator(double fixIncome, double investRtn, double[] ira, double[] ssnIncome,
+    public RothConversionCalculator(double fixIncome, double investRtn, double[] ira, double[] ssnIncome, int[] ssnAge,
                                     int yearBegin, boolean paytaxInIra, int[] born, int propertyTax, int mortgage, int donation) {
         this.fixIncome = fixIncome;
         this.investRtn = investRtn;
         this.iraBegin = ira.clone();
         this.ssnIncome = ssnIncome;
+        this.ssnAge = ssnAge;
         this.yearBegin = yearBegin;
         this.payTaxInIra = paytaxInIra;
         this.born = born;
@@ -152,7 +154,7 @@ public class RothConversionCalculator {
     }
 
     double ssnIncome(int[] age, int person) {
-        if (age[person] >= 67 && age[person] < life[person]) {
+        if (age[person] >= ssnAge[person] && age[person] < life[person]) {
             return ssnIncome[person];
         } else
             return 0;
@@ -244,7 +246,8 @@ public class RothConversionCalculator {
                 }
             }
             // tax with final updated income.
-            tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
+            long fedDeduction = fedDeduction(age, income, calTax);
+            tax = taxAmount(income - fedDeduction, fedTaxRate);
             if (calTax) {
                 tax += taxAmount(income - calDeduction(age), calTaxRate);
             }
@@ -254,7 +257,7 @@ public class RothConversionCalculator {
                 medicare[person] = medicarePreminus(age, income, person);
             }
 
-            yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, income, tax));
+            yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, income, tax, fedDeduction));
             // investment return;
             for (int person = 0; person < 2; person++) {
                 age[person]++;

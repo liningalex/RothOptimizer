@@ -12,7 +12,8 @@ public class IraRothPlanner {
         options.addOption("i", "ira", true, "ira balance");
         options.addOption("b", "born", true, "born year");
         options.addOption("f", "fixIncome", true, "fix income");
-        options.addOption("s", "ssnIncome", true, "ssn income at age 67");
+        options.addOption("s", "ssnIncome", true, "ssn income");
+        options.addOption("a", "ssnAge", true, "age to get ssn income");
         options.addOption("y", "yearBegin", true, "year begin to convert");
         options.addOption("p", "payTaxInIra", true, "pay tax from ira account");
         options.addOption("r", "investRtn", true, "investment return");
@@ -25,6 +26,7 @@ public class IraRothPlanner {
             int[] born = parseArrayInt(cmd.getOptionValue("born", "{1965,1968}"));
             double[] ira = parseArrayDouble(cmd.getOptionValue("ira", "{100000,180000}"));
             double fixIncome = Double.parseDouble(cmd.getOptionValue("fixIncome", "11000"));
+            int[] ssnAge = parseArrayInt(cmd.getOptionValue("ssnAge", "{67,67}"));
             double[] ssnIncome = parseArrayDouble(cmd.getOptionValue("ssnIncome", "{18000, 28000}"));
             boolean payTaxInIra = Boolean.parseBoolean(cmd.getOptionValue("payTaxInIra", "True"));
             double investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.05"));
@@ -33,7 +35,7 @@ public class IraRothPlanner {
             int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
             int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
 
-            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, ira, ssnIncome,
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, ira, ssnIncome, ssnAge,
                     yearBegin, payTaxInIra, born, propertyTax, mortgage, donation);
             /*System.out.println("No optmiazation, no state tax");
             rothConversionCalculator.rothBalance(fixIncome, false);
