@@ -25,7 +25,7 @@ class RothConversionCalculatorTest {
         assertEquals((long)a1.rmd, 530351);
         assertEquals((long)a1.totalTax, 78887);
         RothConvResults a2 = rothConversionCalculator.rothBalance(fixIncome + 40000000, false);
-        assertEquals((long)a2.roth, 1126952);
+        assertEquals((long)a2.roth, 1125705);
         assertEquals((long)a2.rmd, 0);
         assertEquals((long)a2.totalTax, 48694);
         RothConvResults a3 = rothConversionCalculator.rothBalance(fixIncome, true);
@@ -33,22 +33,22 @@ class RothConversionCalculatorTest {
         assertEquals((long)a3.rmd, 530351);
         assertEquals((long)a3.totalTax, 104223);
         RothConvResults a4 = rothConversionCalculator.rothBalance(360000, true);
-        assertEquals((long)a4.roth, 1013441);
+        assertEquals((long)a4.roth, 1011724);
         assertEquals((long)a4.rmd, 0);
         assertEquals((long)a4.totalTax, 65564);
 
         RothConvResults a = rothConversionCalculator.optimalConversion(true);
-        assertEquals(a.roth, 1148641.5341422018);
+        assertEquals(a.roth, 1148626.5788957777);
         assertEquals(a.rmd, 0.0);
-        assertEquals(a.totalTax, 57705.0);
+        assertEquals(a.totalTax, 57706.0);
     }
 
     @Test
     void convRatio() {
         final int[] life = {88, 89};
         double[] a = rothConversionCalculator.convRatio(ira, age, life);
-        assertEquals(a[0], 0.3816793893129771);
-        assertEquals(a[1], 0.6183206106870229);;
+        assertEquals(a[0], 0.37861915367483295);
+        assertEquals(a[1], 0.621380846325167);;
     }
 
     @Test
