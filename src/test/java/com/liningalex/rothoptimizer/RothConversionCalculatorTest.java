@@ -38,9 +38,9 @@ class RothConversionCalculatorTest {
         assertEquals((long)a4.totalTax, 65564);
 
         RothConvResults a = rothConversionCalculator.optimalConversion(true);
-        assertEquals(a.roth, 1336040.9590248144);
-        assertEquals(a.rmd, 208.54572395666625);
-        assertEquals(a.totalTax, 16577.0);
+        assertEquals(a.roth, 1148641.5341422018);
+        assertEquals(a.rmd, 0.0);
+        assertEquals(a.totalTax, 57705.0);
     }
 
     @Test

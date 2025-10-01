@@ -136,7 +136,7 @@ public class RothConversionCalculator {
         this.mortgage = mortgage;
         this.donation = donation;
     }
-    
+
 
     void setPayTaxInIra(boolean payTaxInIra) {
         this.payTaxInIra = payTaxInIra;
@@ -173,11 +173,15 @@ public class RothConversionCalculator {
             double[] toRoth = new double[2];
             double[] medicareOrig = new double[2];
             double[] medicare = new double[2];
+            if (year == 2050) {
+                // System.out.println(year + "," + iraBalance);
+            }
             for (int person = 0; person < 2; person++) {
                 // social security income
                 income += ssnIncome(age, person);
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
+                rmdBalance[person] += rmd[person];
                 iraBalance[person] -= rmd[person];
                 income += rmd[person];
                 medicareOrig[person] = medicarePreminus(age, income, person);
@@ -192,8 +196,8 @@ public class RothConversionCalculator {
             // amount to convert is max of ira balance.
             double convertAmount = Math.min(goalIncome - income, Math.max(0, iraBalance[0] + iraBalance[1]));
             double[] convRatio = convRatio(iraBalance, age, life);
-            for (int person = 0; person < 2; person++) {
-                if (convertAmount > 0) {
+            if (convertAmount > 0) {
+                for (int person = 0; person < 2; person++) {
                     if (iraBalance[person] > 0) {
                         double conv = convRatio[person] * convertAmount;
                         conv = Math.min(iraBalance[person], conv);
@@ -202,52 +206,51 @@ public class RothConversionCalculator {
                         income += conv;
                     }
                 }
-            }
 
-            // tax amount with updated income.
-            double tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
-            if (calTax) {
-                tax += taxAmount(income - calDeduction(age), calTaxRate);
-            }
-
-            for (int person = 0; person < 2; person++) {
-                medicare[person] = medicarePreminus(age, income, person);
-            }
-
-            for (int person = 0; person < 2; person++) {
-                // rmd amount can't be converted to Roth, keet it separated.
-                rmdBalance[person] += rmd[person];
-                // amount to convert to Roth.
-                rothBalance[person] += toRoth[person];
-                // now additional money is needed for paying tax caused by conversion.
-                if (payTaxInIra) {
-                    double amountPayTax = (tax - taxOrig) * convRatio[person];
-                    amountPayTax += (tax - taxOrig) * convRatio[person] * tax / income;
-
-                    amountPayTax += medicare[person] - medicareOrig[person];
-                    amountPayTax += (medicare[person] - medicareOrig[person]) * convRatio[person] * tax/income;
-                    
-                    income += amountPayTax;
-                    // pay the amount in rmd account.
-                    rmdBalance[person] -= amountPayTax;
+                // tax amount with updated income.
+                double tax = taxAmount(income - fedDeduction(age, income, calTax), fedTaxRate);
+                if (calTax) {
+                    tax += taxAmount(income - calDeduction(age), calTaxRate);
                 }
-                if (rmdBalance[person] < 0) {
-                    // pay the amount in ira account.
-                    iraBalance[person] += rmdBalance[person];
-                    rmdBalance[person] = 0;
-                    if (iraBalance[person] < 0) {
-                        // pay the amount in roth account.
-                        rothBalance[person] += iraBalance[person];
-                        toRoth[person] += iraBalance[person];
-                        // this amount is tax free, so reduce income.
-                        income += iraBalance[person];
-                        iraBalance[person] = 0;
+
+                for (int person = 0; person < 2; person++) {
+                    medicare[person] = medicarePreminus(age, income, person);
+                }
+
+
+                for (int person = 0; person < 2; person++) {
+                    // amount to convert to Roth.
+                    rothBalance[person] += toRoth[person];
+                    // extra tax caused by conversion.
+                    if (payTaxInIra) {
+                        double amountPayTax = (tax - taxOrig) * convRatio[person];
+                        amountPayTax += (tax - taxOrig) * convRatio[person] * tax / income;
+
+                        amountPayTax += (medicare[person] - medicareOrig[person]) * convRatio[person];
+                        amountPayTax += (medicare[person] - medicareOrig[person]) * convRatio[person] * tax / income;
+
+                        income += amountPayTax;
+                        // pay the amount in rmd account.
+                        rmdBalance[person] -= amountPayTax;
+                    }
+                    if (rmdBalance[person] < 0) {
+                        // pay the amount in ira account.
+                        iraBalance[person] += rmdBalance[person];
+                        rmdBalance[person] = 0;
+                        if (iraBalance[person] < 0) {
+                            // pay the amount in roth account.
+                            rothBalance[person] += iraBalance[person];
+                            toRoth[person] += iraBalance[person];
+                            // this amount is tax free, so reduce income.
+                            income += iraBalance[person];
+                            iraBalance[person] = 0;
+                        }
                     }
                 }
             }
             // tax with final updated income.
             long fedDeduction = fedDeduction(age, income, calTax);
-            tax = taxAmount(income - fedDeduction, fedTaxRate);
+            double tax = taxAmount(income - fedDeduction, fedTaxRate);
             if (calTax) {
                 tax += taxAmount(income - calDeduction(age), calTaxRate);
             }
@@ -280,14 +283,14 @@ public class RothConversionCalculator {
 
         RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, goalIncome, rothBalance[0] + rothBalance[1],
                 rmdBalance[0] + rmdBalance[1], lastTax, totalTax + lastTax);
-        
+
         return rothConvResults;
     }
 
     RothConvResults optimalConversion(boolean calTax) {
         double maxRoth = Double.MIN_VALUE;
         RothConvResults best = null;
-        for (double i = 0; i < iraBegin[0] + iraBegin[1]; i += 100) {
+        for (double i = 200100.0; i < iraBegin[0] + iraBegin[1]; i += 100) {
             RothConvResults results = rothBalance(fixIncome + i, calTax);
             if (results.roth > maxRoth) {
                 maxRoth = results.roth;
