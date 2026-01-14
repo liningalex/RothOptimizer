@@ -95,6 +95,10 @@ class RothConversionCalculatorTest {
         int[] age1 = {68, 63};
         long a2 = rothConversionCalculator.fedDeduction(age, 140000, true);
         assertEquals(a2, 39100);
+        long a3 = rothConversionCalculator.fedDeduction(age, 550000, true);
+        assertEquals(a3, 33100);
+        long a4 = rothConversionCalculator.fedDeduction(age, 505000, true);
+        assertEquals(a4, 40400);
     }
 
     @Test

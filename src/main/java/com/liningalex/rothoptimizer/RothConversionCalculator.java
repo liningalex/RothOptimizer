@@ -100,10 +100,15 @@ public class RothConversionCalculator {
             }
         }
         long itemized = 0;
-        if (income < 500000) {
+        long localTax = 0;
+        if (income < 505000) {
             if (calTax)
-                itemized += taxAmount(income - calDeduction(age), calTaxRate);
-            itemized += mortgage + propertyTax + donation;
+                localTax= taxAmount(income - calDeduction(age), calTaxRate);
+            itemized = Math.min(localTax + mortgage + propertyTax + donation, 40400);
+        } else {
+            if (calTax)
+                localTax= taxAmount(income - calDeduction(age), calTaxRate);
+            itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
         }
         double ssnDeduction = ssnIncome(age, 0) + ssnIncome(age, 1);
         if (income > 44000)
@@ -111,7 +116,7 @@ public class RothConversionCalculator {
         else if (income > 32000)
             ssnDeduction *= 0.5;
 
-        return Math.max(stdAmount, Math.min(40000, itemized)) + (long) ssnDeduction;
+        return Math.max(stdAmount, itemized) + (long) ssnDeduction;
     }
 
     long calDeduction(int[] age) {
