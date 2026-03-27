@@ -103,11 +103,11 @@ public class RothConversionCalculator {
         long localTax = 0;
         if (income < 505000) {
             if (calTax)
-                localTax= taxAmount(income - calDeduction(age), calTaxRate);
+                localTax = taxAmount(income - calDeduction(age), calTaxRate);
             itemized = Math.min(localTax + mortgage + propertyTax + donation, 40400);
         } else {
             if (calTax)
-                localTax= taxAmount(income - calDeduction(age), calTaxRate);
+                localTax = taxAmount(income - calDeduction(age), calTaxRate);
             itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
         }
         double ssnDeduction = ssnIncome(age, 0) + ssnIncome(age, 1);
@@ -170,7 +170,7 @@ public class RothConversionCalculator {
         double[] iraBalance = iraBegin.clone();
         double totalTax = 0;
         double[] rothBalance = new double[2];
-        double[] rmdBalance = new double[2];
+        double rmdBalance = 0;
         double[] rmd = new double[2];
         List<RothConvResults.YearConvResults> yearConvResultsList = new ArrayList<>();
         for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
@@ -183,7 +183,7 @@ public class RothConversionCalculator {
                 income += ssnIncome(age, person);
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
-                rmdBalance[person] += rmd[person];
+                rmdBalance += rmd[person];
                 iraBalance[person] -= rmd[person];
                 income += rmd[person];
                 medicareOrig[person] = medicarePreminus(age, income, person);
@@ -214,25 +214,25 @@ public class RothConversionCalculator {
                     tax += taxAmount(income - calDeduction(age), calTaxRate);
                 }
 
-                // medicare with updated income.
+                // medicare diffs with updated income.
+                double medicareDiff = 0;
                 for (int person = 0; person < 2; person++) {
-                    medicare[person] = medicarePreminus(age, income, person);
+                    medicareDiff += medicarePreminus(age, income, person) - medicareOrig[person];
                 }
 
+                // extra tax caused by conversion.
+                if (payTaxInIra) {
+                    double amountPayTax = tax - taxOrig + medicareDiff;
+                    income += amountPayTax;
+                    // pay the amount in rmd account.
+                    rmdBalance -= amountPayTax;
+                }
 
-                for (int person = 0; person < 2; person++) {
-
-                    // extra tax caused by conversion.
-                    if (payTaxInIra) {
-                        double amountPayTax = (tax - taxOrig + medicare[person] - medicareOrig[person]) * convRatio[person] * (1 + tax / income);
-                        income += amountPayTax;
-                        // pay the amount in rmd account.
-                        rmdBalance[person] -= amountPayTax;
-                    }
-                    if (rmdBalance[person] < 0) {
+                if (rmdBalance < 0) {
+                    for (int person = 0; person < 2; person++) {
                         // pay the amount in ira account.
-                        iraBalance[person] += rmdBalance[person];
-                        rmdBalance[person] = 0;
+                        iraBalance[person] += rmdBalance * convRatio[person];
+
                         if (iraBalance[person] < 0) {
                             // pay the amount in roth account.
                             rothBalance[person] += iraBalance[person];
@@ -243,7 +243,9 @@ public class RothConversionCalculator {
                         }
                     }
                 }
+                rmdBalance = 0;
             }
+
             // tax with final updated income.
             long fedDeduction = fedDeduction(age, income, incCalTax);
             double fedTax = taxAmount(income - fedDeduction, fedTaxRate);
@@ -263,9 +265,8 @@ public class RothConversionCalculator {
                 age[person]++;
                 iraBalance[person] *= (1 + investRtn);
                 rothBalance[person] *= (1 + investRtn);
-                rmdBalance[person] *= (1 + investRtn);
             }
-
+            rmdBalance *= (1 + investRtn);
         }
         double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate);
         if (incCalTax) {
@@ -279,7 +280,7 @@ public class RothConversionCalculator {
         }
 
         RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, goalIncome, rothBalance[0] + rothBalance[1],
-                rmdBalance[0] + rmdBalance[1], lastTax, totalTax + lastTax);
+                rmdBalance, lastTax, totalTax + lastTax);
 
         return rothConvResults;
     }

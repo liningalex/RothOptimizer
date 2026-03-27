@@ -58,7 +58,7 @@ public class RothConvResults {
     @Override
     public String toString() {
         return String.join("\n", yearConvResultsList.stream().map(String::valueOf).toList()) + "\n" +
-                String.format("income=%.0f,asset=%.0f,lastTax=%.0f,totalTax=%.0f",
-                        income, roth + rmd, lastTax, totalTax + lastTax) + "\n";
+                String.format("income=%.0f,asset=%.0f(%.0f+%.0f),lastTax=%.0f,totalTax=%.0f",
+                        income, roth + rmd, roth, rmd, lastTax, totalTax + lastTax) + "\n";
     }
 }
