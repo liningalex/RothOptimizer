@@ -197,7 +197,7 @@ public class RothConversionCalculator {
 
             // amount to convert is max of ira balance.
             double convertAmount = Math.min(goalIncome - income, iraBalance[0] + iraBalance[1]);
-            double[] convRatio = convRatio(iraBalance, age, life);
+            double[] convRatio = convRatio(iraBalance, age);
             if (convertAmount > 0) {
                 for (int person = 0; person < 2; person++) {
                     if (iraBalance[person] > 0) {
@@ -271,7 +271,7 @@ public class RothConversionCalculator {
         if (incCalTax) {
             lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age), calTaxRate);
         }
-        double[] convRatio = convRatio(iraBalance, age, life);
+        double[] convRatio = convRatio(iraBalance, age);
         for (int person = 0; person < 2; person++) {
             iraBalance[person] -= lastTax * convRatio[person];
             rothBalance[person] += iraBalance[person];
@@ -285,29 +285,29 @@ public class RothConversionCalculator {
     }
 
     RothConvResults optimalConversion(boolean calTax) {
-        double maxRoth = Double.MIN_VALUE;
+        double maxAsset = Double.MIN_VALUE;
         RothConvResults best = null;
         for (double i = 200100.0; i < iraBegin[0] + iraBegin[1]; i += 100) {
             RothConvResults results = rothBalance(fixIncome + i, calTax);
-            if (results.roth > maxRoth) {
-                maxRoth = results.roth;
+            if (results.roth + results.rmd > maxAsset) {
+                maxAsset = results.roth + results.rmd;
                 best = results;
             }
         }
         return best;
     }
 
-    double[] convRatio(double[] iraBalance, int[] age, int[] life) {
+    double[] convRatio(double[] iraBalance, int[] age) {
         double[] ratio = {0.5, 0.5};
         if (iraBalance[0] + iraBalance[1] > 0) {
-            if (age[0] <= life[0] && age[1] <= life[1]) {
+            if (age[0] <= rmdAge[0] && age[1] <= rmdAge[1]) {
                 double[] ave = new double[2];
-                ave[0] = iraBalance[0] / (life[0] - age[0] + 1);
-                ave[1] = iraBalance[1] / (life[1] - age[1] + 1);
+                ave[0] = iraBalance[0] / (rmdAge[0] - age[0] + 1);
+                ave[1] = iraBalance[1] / (rmdAge[1] - age[1] + 1);
 
                 ratio[0] = ave[0] / (ave[0] + ave[1]);
                 ratio[1] = ave[1] / (ave[0] + ave[1]);
-            } else if (age[0] <= life[0]) {
+            } else if (age[0] <= rmdAge[0]) {
                 ratio[0] = 1;
                 ratio[1] = 0;
             } else {
