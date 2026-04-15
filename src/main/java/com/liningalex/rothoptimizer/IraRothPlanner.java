@@ -10,12 +10,13 @@ public class IraRothPlanner {
     public static void main(String[] args) {
         Options options = new Options();
         options.addOption("i", "ira", true, "ira balance");
+        options.addOption("x", "inflation", true, "inflation rate");
+        options.addOption("k", "brokerage", true, "brokerage balance");
         options.addOption("b", "born", true, "born year");
-        options.addOption("f", "fixIncome", true, "fix income");
+        options.addOption("p", "spending", true, "spending");
         options.addOption("s", "ssnIncome", true, "ssn income");
         options.addOption("a", "ssnAge", true, "age to get ssn income");
         options.addOption("y", "yearBegin", true, "year begin to convert");
-        options.addOption("p", "payTaxInIra", true, "pay tax from ira account");
         options.addOption("r", "investRtn", true, "investment return");
         options.addOption("t", "propertyTax", true, "property tax");
         options.addOption("m", "mortgage", true, "mortgage interest");
@@ -24,25 +25,26 @@ public class IraRothPlanner {
         try {
             CommandLine cmd = parser.parse(options, args);
             int[] born = parseArrayInt(cmd.getOptionValue("born", "{1965,1968}"));
-            double[] ira = parseArrayDouble(cmd.getOptionValue("ira", "{100000,180000}"));
-            double fixIncome = Double.parseDouble(cmd.getOptionValue("fixIncome", "11000"));
+            double[] ira = parseArrayDouble(cmd.getOptionValue("ira", "{1250000,1250000}"));
+            double[] brok = parseArrayDouble(cmd.getOptionValue("brokerage", "{35000,54380}"));
+            double spending = Double.parseDouble(cmd.getOptionValue("spending", "100000"));
+            double inflation = Double.parseDouble(cmd.getOptionValue("inflation", "0.025"));
             int[] ssnAge = parseArrayInt(cmd.getOptionValue("ssnAge", "{67,67}"));
-            double[] ssnIncome = parseArrayDouble(cmd.getOptionValue("ssnIncome", "{18000, 28000}"));
-            boolean payTaxInIra = Boolean.parseBoolean(cmd.getOptionValue("payTaxInIra", "True"));
-            double investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.05"));
+            double[] ssnIncome = parseArrayDouble(cmd.getOptionValue("ssnIncome", "{48000, 48000}"));
+            double investRtn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.08"));
             int yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
-            int propertyTax = Integer.parseInt(cmd.getOptionValue("propertyTax", "0"));
+            int propertyTax = Integer.parseInt(cmd.getOptionValue("propertyTax", "10000"));
             int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
-            int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
+            int donation = Integer.parseInt(cmd.getOptionValue("donation", "2000"));
 
-            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(fixIncome, investRtn, ira, ssnIncome, ssnAge,
-                    yearBegin, payTaxInIra, born, propertyTax, mortgage, donation);
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(spending,  investRtn, ira, brok, ssnIncome, ssnAge,
+                    yearBegin, born, propertyTax, mortgage, donation, inflation);
             System.out.println("No optmiazation, no state tax");
-            System.out.println(rothConversionCalculator.rothBalance(fixIncome + ira[0] + ira[1], false));
+            System.out.println(rothConversionCalculator.rothBalance(spending, ira[0] + ira[1], 1));
             System.out.println("No optmiazation, having state tax");
-            System.out.println(rothConversionCalculator.rothBalance(fixIncome, true));
+            System.out.println(rothConversionCalculator.rothBalance(spending, 0, 0));
             System.out.println("Having optmiazation, having state tax");
-            System.out.println(rothConversionCalculator.optimalConversion(true));
+            System.out.println(rothConversionCalculator.optimalConversion(0));
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }

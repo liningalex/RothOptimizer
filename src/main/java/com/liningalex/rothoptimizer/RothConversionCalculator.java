@@ -1,44 +1,46 @@
 package com.liningalex.rothoptimizer;
 
+import org.apache.commons.lang3.SerializationUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class RothConversionCalculator {
 
-    public final double[][] fedTaxRate = {
+    public final double[][] fedTaxBracket = {
             {
-                    10, 0,0
+                    10, 0, 0
             },
             {
-                    12, 23850,11925
+                    12, 23850, 11925
             },
             {
-                    22, 96950,48475
+                    22, 96950, 48475
             },
             {
-                    24, 206700,103350
+                    24, 206700, 103350
             },
             {
-                    32, 394600,197300
+                    32, 394600, 197300
             },
             {
-                    35, 501050,250525
+                    35, 501050, 250525
             },
             {
-                    37, 751600,626350
+                    37, 751600, 626350
             }
     };
 
     public final double[][] irmaaTbl = {
-            {212000, 185, 40},
-            {266000, 259, 40 + 13.7},
-            {334000, 370, 40 + 35.30},
-            {400000, 480.90, 40 + 57},
-            {750000, 591.90, 40 + 78.60},
-            {Double.MAX_VALUE, 628.90, 40 + 85}
+            {218000, 109000, 284, 40},
+            {274000, 137000, 405, 40 + 14.50},
+            {342000, 171000, 527, 40 + 37.50},
+            {410000, 205000, 649.90, 40 + 60.40},
+            {750000, 500000, 689.90, 40 + 83.30},
+            {Double.MAX_VALUE, Double.MAX_VALUE, 628.90, 40 + 91}
     };
 
-    public final double[][] calTaxRate = {
+    public final double[][] calTaxBracket = {
             {
                     1, 0, 0
             },
@@ -57,7 +59,7 @@ public class RothConversionCalculator {
             {
                     9.3, 141213, 70606
             },
-            {       10.3, 721319, 360659
+            {10.3, 721319, 360659
             },
             {
                     11.3, 865575, 432787
@@ -80,7 +82,9 @@ public class RothConversionCalculator {
     final int[] born;
     public final int[] life = {88, 89};
     final double[] iraBegin;
-    final double fixIncome;
+    final double[] brokBegin;
+    final double spending;
+    final double inflation;
     final double investRtn;
     final double[] ssnIncome;
     final int[] ssnAge;
@@ -88,7 +92,6 @@ public class RothConversionCalculator {
     final int propertyTax;
     final int mortgage;
     final int donation;
-    boolean payTaxInIra;
 
     long fedDeduction(int[] age, double income, boolean calTax) {
         long stdAmount = this.fedDeductionDefault;
@@ -107,11 +110,11 @@ public class RothConversionCalculator {
         long localTax = 0;
         if (income < 505000) {
             if (calTax)
-                localTax = taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                localTax = taxAmount(income - calDeduction(age), calTaxBracket, isJoint);
             itemized = Math.min(localTax + mortgage + propertyTax + donation, 40400);
         } else {
             if (calTax)
-                localTax = taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                localTax = taxAmount(income - calDeduction(age), calTaxBracket, isJoint);
             itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
         }
         double ssnDeduction = ssnIncome(age, 0) + ssnIncome(age, 1);
@@ -128,15 +131,16 @@ public class RothConversionCalculator {
         return Math.max(calDeductionDefault, donation + mortgage + propertyTax) + (long) ssnIncome;
     }
 
-    public RothConversionCalculator(double fixIncome, double investRtn, double[] ira, double[] ssnIncome, int[] ssnAge,
-                                    int yearBegin, boolean paytaxInIra, int[] born, int propertyTax, int mortgage, int donation) {
-        this.fixIncome = fixIncome;
+    public RothConversionCalculator(double fixIncome, double investRtn, double[] ira, double[] brok, double[] ssnIncome, int[] ssnAge,
+                                    int yearBegin, int[] born, int propertyTax, int mortgage, int donation, double inflation) {
+        this.spending = fixIncome;
         this.investRtn = investRtn;
         this.iraBegin = ira.clone();
+        this.brokBegin = brok.clone();
         this.ssnIncome = ssnIncome;
         this.ssnAge = ssnAge;
+        this.inflation = inflation;
         this.yearBegin = yearBegin;
-        this.payTaxInIra = paytaxInIra;
         this.born = born;
         for (int person = 0; person < 2; person++) {
             this.rmdAge[person] = rmdAge(born[person]);
@@ -146,10 +150,6 @@ public class RothConversionCalculator {
         this.donation = donation;
     }
 
-
-    void setPayTaxInIra(boolean payTaxInIra) {
-        this.payTaxInIra = payTaxInIra;
-    }
 
     int rmdAge(int born) {
         if (born < 1949)
@@ -163,192 +163,239 @@ public class RothConversionCalculator {
     }
 
     double ssnIncome(int[] age, int person) {
-        if (age[person] >= ssnAge[person] && age[person] < life[person]) {
+        if (age[person] >= ssnAge[person] && age[person] <= life[person]) {
             return ssnIncome[person];
         } else
             return 0;
     }
 
-    RothConvResults rothBalance(double goalIncome, boolean incCalTax) {
+    double[] withDrawBrokerage(double[] brokBalance, double amount) {
+        double[] rtn = {0, 0};
+        if (brokBalance[1] > 0) {
+
+            rtn[0] = Math.min(amount, brokBalance[1]);
+            rtn[1] = rtn[0] * (brokBalance[1] - brokBalance[0]) / brokBalance[1];
+            brokBalance[0] -= rtn[0] * brokBalance[0] / brokBalance[1];
+            brokBalance[1] -= rtn[0];
+        }
+        return rtn;
+    }
+
+    double withDraw(double amount, double[] brokBalance, double[] iraBalance, double[] rothBalance) {
+        double[] amtAndGain = withDrawBrokerage(brokBalance, amount);
+        double taxableIncome = amtAndGain[1];
+        int[] age = {60, 60};
+        if ((amount - amtAndGain[0]) > 0) {
+            taxableIncome += amount - amtAndGain[0];
+            double[] convRatio = convRatio(iraBalance, age, amount - amtAndGain[0]);
+            for (int person = 0; person < 2; person++) {
+                double amt = convRatio[person] * (amount - amtAndGain[0]);
+                iraBalance[person] -= amt;
+                if (iraBalance[person] < 0) {
+                    rothBalance[person] += iraBalance[person];
+                    taxableIncome += iraBalance[person];
+                    iraBalance[person] = 0;
+                }
+            }
+            if (rothBalance[0] < 0) {
+                rothBalance[1] += rothBalance[0];
+                rothBalance[0] = 0;
+            } else if (rothBalance[1] < 0) {
+                rothBalance[0] += rothBalance[1];
+                rothBalance[1] = 0;
+            }
+        }
+        return taxableIncome;
+    }
+
+    RothConvResults rothBalance(double spending, double convertion, int noCalYears) {
         int[] age = {yearBegin - born[0], yearBegin - born[1]};
         double[] iraBalance = iraBegin.clone();
         double totalTax = 0;
         double[] rothBalance = new double[2];
-        double rmdBalance = 0;
+        double[] brokBalance = brokBegin.clone();
         double[] rmd = new double[2];
+        double[][] fedTaxBracket = SerializationUtils.clone(this.fedTaxBracket.clone());
+        double[][] irmaaTbl = SerializationUtils.clone(this.irmaaTbl.clone());
+        double[][] calTaxBracket = SerializationUtils.clone(this.calTaxBracket.clone());
         List<RothConvResults.YearConvResults> yearConvResultsList = new ArrayList<>();
-        for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
-            double income = fixIncome;
+        for (int year = yearBegin; (age[0] <= life[0]) || (age[1] <= life[1]); year++) {
+            double[] amtAndGain = withDrawBrokerage(brokBalance, spending);
+            double taxableIncome = withDraw(spending, brokBalance, iraBalance, rothBalance);
+
             double[] toRoth = new double[2];
             double[] medicareOrig = new double[2];
             double[] medicare = new double[2];
             boolean isJoint = true;
             for (int person = 0; person < 2; person++) {
-                // social security income
-                income += ssnIncome(age, person);
+                // social security taxableIncome
+                taxableIncome += ssnIncome(age, person);
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
-                rmdBalance += rmd[person];
+                brokBalance[0] += rmd[person];
+                brokBalance[1] += rmd[person];
                 iraBalance[person] -= rmd[person];
-                income += rmd[person];
-                medicareOrig[person] = medicarePreminus(age, income, person);
+                taxableIncome += rmd[person];
+                medicareOrig[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint);
                 if (age[person] > life[person]) {
                     isJoint = false;
                 }
             }
 
             // original tax amount.
-            double taxOrig = taxAmount(income - fedDeduction(age, income, incCalTax), fedTaxRate, isJoint);
-            if (incCalTax) {
-                taxOrig += taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+            double taxOrig = taxAmount(taxableIncome - fedDeduction(age, taxableIncome, noCalYears <= 0), fedTaxBracket, isJoint);
+            if (noCalYears <= 0) {
+                taxOrig += taxAmount(taxableIncome - calDeduction(age), calTaxBracket, isJoint);
             }
 
             // amount to convert is max of ira balance.
-            double convertAmount = Math.min(goalIncome - income, iraBalance[0] + iraBalance[1]);
-            double[] convRatio = convRatio(iraBalance, age);
+            double convertAmount = Math.min(convertion, iraBalance[0] + iraBalance[1]);
+            double[] convRatio = convRatio(iraBalance, age, convertAmount);
             if (convertAmount > 0) {
                 for (int person = 0; person < 2; person++) {
                     if (iraBalance[person] > 0) {
                         toRoth[person] = Math.min(iraBalance[person], convRatio[person] * convertAmount);
                         iraBalance[person] -= toRoth[person];
                         rothBalance[person] += toRoth[person];
-                        income += toRoth[person];
+                        taxableIncome += toRoth[person];
                     }
                 }
 
-                // tax amount with updated income.
-                double tax = taxAmount(income - fedDeduction(age, income, incCalTax), fedTaxRate, isJoint);
-                if (incCalTax) {
-                    tax += taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                // tax amount with updated taxableIncome.
+                double tax = taxAmount(taxableIncome - fedDeduction(age, taxableIncome, noCalYears > 0), fedTaxBracket, isJoint);
+                if (noCalYears <= 0) {
+                    tax += taxAmount(taxableIncome - calDeduction(age), calTaxBracket, isJoint);
                 }
 
-                // medicare diffs with updated income.
+                // medicare diffs with updated taxableIncome.
                 double medicareDiff = 0;
                 for (int person = 0; person < 2; person++) {
-                    medicareDiff += medicarePreminus(age, income, person) - medicareOrig[person];
+                    medicareDiff += medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint) - medicareOrig[person];
                 }
 
                 // extra tax caused by conversion.
-                if (payTaxInIra) {
-                    double amountPayTax = tax - taxOrig + medicareDiff;
-                    income += amountPayTax;
-                    // pay the amount in rmd account.
-                    rmdBalance -= amountPayTax;
-                }
-
-                if (rmdBalance < 0) {
-                    for (int person = 0; person < 2; person++) {
-                        // pay the amount in ira account.
-                        iraBalance[person] += rmdBalance * convRatio[person];
-
-                        if (iraBalance[person] < 0) {
-                            // pay the amount in roth account.
-                            rothBalance[person] += iraBalance[person];
-                            toRoth[person] += iraBalance[person];
-                            // this amount is tax free, so reduce income.
-                            income += iraBalance[person];
-                            iraBalance[person] = 0;
-                        }
-                    }
-                }
-                rmdBalance = 0;
+                double additionalTax = tax - taxOrig + medicareDiff;
+                taxableIncome += withDraw(additionalTax, brokBalance, iraBalance, rothBalance);
             }
 
-            // tax with final updated income.
-            long fedDeduction = fedDeduction(age, income, incCalTax);
-            double fedTax = taxAmount(income - fedDeduction, fedTaxRate, isJoint);
+            // tax with final updated taxableIncome.
+            long fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0);
+            double fedTax = taxAmount(taxableIncome - fedDeduction, fedTaxBracket, isJoint);
             double calTax = 0;
-            if (incCalTax) {
-                calTax = taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+            if (noCalYears <= 0) {
+                calTax = taxAmount(taxableIncome - calDeduction(age), calTaxBracket, isJoint);
             }
             totalTax += fedTax + calTax;
-            // medicare with the final income.
+            // medicare with the final taxableIncome.
             for (int person = 0; person < 2; person++) {
-                medicare[person] = medicarePreminus(age, income, person);
+                medicare[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint);
             }
 
-            yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, income, fedTax, calTax, fedDeduction));
+            yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, taxableIncome, fedTax, calTax, fedDeduction, brokBalance));
             // investment return;
             for (int person = 0; person < 2; person++) {
-                age[person]++;
+                if (age[person] <= life[person]) {
+                    age[person]++;
+                }
                 iraBalance[person] *= (1 + investRtn);
                 rothBalance[person] *= (1 + investRtn);
             }
-            rmdBalance *= (1 + investRtn);
+            brokBalance[1] *= (1 + investRtn);
+            spending *= (1 + inflation);
+            noCalYears--;
+            for (double[] i : fedTaxBracket) {
+                i[1] *= (1 + inflation);
+                i[2] *= (1 + inflation);
+            }
+            for (double[] i : calTaxBracket) {
+                i[1] *= (1 + inflation);
+                i[2] *= (1 + inflation);
+            }
+            for (double[] i : irmaaTbl) {
+                i[0] *= (1 + inflation);
+                i[1] *= (1 + inflation);
+            }
+            if (age[0] > life[0]) {
+                iraBalance[1] += iraBalance[0];
+                iraBalance[0] = 0;
+            }
+            if (age[1] > life[1]) {
+                iraBalance[0] += iraBalance[1];
+                iraBalance[1] = 0;
+            }
+            if (rothBalance[0] < 0 || rothBalance[1] < 0) {
+                break;
+            }
         }
-        double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate, false);
-        if (incCalTax) {
-            lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age), calTaxRate, false);
+        double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxBracket, false);
+        if (noCalYears <= 0) {
+            lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age), calTaxBracket, false);
         }
-        double[] convRatio = convRatio(iraBalance, age);
+        double[] convRatio = convRatio(iraBalance, age, lastTax);
         for (int person = 0; person < 2; person++) {
             iraBalance[person] -= lastTax * convRatio[person];
             rothBalance[person] += iraBalance[person];
             iraBalance[person] = 0;
         }
 
-        RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, goalIncome, rothBalance[0] + rothBalance[1],
-                rmdBalance, lastTax, totalTax + lastTax);
+        RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, spending, rothBalance[0] + rothBalance[1],
+                brokBalance[1], lastTax, totalTax + lastTax);
 
         return rothConvResults;
     }
 
-    RothConvResults optimalConversion(boolean calTax) {
-        double maxAsset = Double.MIN_VALUE;
+    RothConvResults optimalConversion(int noCalYears) {
+        double maxAsset = -Double.MAX_VALUE;
         RothConvResults best = null;
-        for (double i = 200100.0; i < iraBegin[0] + iraBegin[1]; i += 100) {
-            RothConvResults results = rothBalance(fixIncome + i, calTax);
-            if (results.roth + results.rmd > maxAsset) {
-                maxAsset = results.roth + results.rmd;
+        for (double i = spending; i < iraBegin[0] + iraBegin[1]; i += 100) {
+            RothConvResults results = rothBalance(spending, i, noCalYears);
+            if (results.roth + results.brok > maxAsset) {
+                maxAsset = results.roth + results.brok;
                 best = results;
             }
         }
         return best;
     }
 
-    double[] convRatio(double[] iraBalance, int[] age) {
-        double[] ratio = {0.5, 0.5};
-        if (iraBalance[0] + iraBalance[1] > 0) {
-            if (age[0] <= rmdAge[0] && age[1] <= rmdAge[1]) {
-                double[] ave = new double[2];
-                ave[0] = iraBalance[0] / (rmdAge[0] - age[0] + 1);
-                ave[1] = iraBalance[1] / (rmdAge[1] - age[1] + 1);
-
-                ratio[0] = ave[0] / (ave[0] + ave[1]);
-                ratio[1] = ave[1] / (ave[0] + ave[1]);
-            } else if (age[0] <= rmdAge[0]) {
-                ratio[0] = 1;
-                ratio[1] = 0;
+    double[] convRatio(double[] iraBalance, int[] age, double amount) {
+        double[] ratio = new double[2];
+        double[] ave = {1, 1};
+        if ((rmdAge[0] - age[0] - 1) <= 0 && iraBalance[0] > 0) {
+            ave[0] = Math.min(amount, iraBalance[0]);
+            ave[1] = amount - ave[0];
+        } else if (rmdAge[1] - age[1] - 1 <= 0 && iraBalance[1] > 0) {
+            ave[1] = Math.min(amount, iraBalance[1]);
+            ave[0] = amount - ave[1];
+        } else if (iraBalance[0] + iraBalance[1] > 0) {
+            if (amount >= (iraBalance[0] + iraBalance[1])) {
+                ave[0] = iraBalance[0];
+                ave[1] = iraBalance[1];
             } else {
-                ratio[0] = 0;
-                ratio[1] = 1;
+                ave[0] = iraBalance[0] / (rmdAge[0] - age[0] - 1);
+                ave[1] = iraBalance[1] / (rmdAge[1] - age[1] - 1);
             }
-        } else if (iraBalance[0] > 0) {
-            ratio[0] = 1;
-            ratio[1] = 0;
-        } else if (iraBalance[1] > 0) {
-            ratio[0] = 0;
-            ratio[1] = 1;
         }
+        ratio[0] = ave[0] / (ave[0] + ave[1]);
+        ratio[1] = ave[1] / (ave[0] + ave[1]);
         return ratio;
-
     }
 
     long rmdAmount(int[] age, double[] ira, int person) {
         double rmd = 0;
-        if (age[person] >= rmdAge[person] && ira[person] > 0 && age[person] < life[person]) {
+        if (age[person] >= rmdAge[person] && ira[person] > 0 && age[person] <= life[person]) {
             rmd = ira[person] / rmdTable[age[person] - rmdAge[person]];
             ira[person] -= rmd;
         }
         return (long) rmd;
     }
 
-    long medicarePreminus(int[] age, double income, int person) {
+    long medicarePreminus(double[][] irmaaTbl, int[] age, double income, int person, boolean isJoint) {
         double preminus = 0;
-        if (age[person] >= 65 && age[person] < life[person]) {
+        int idx = isJoint ? 0 : 1;
+        if (age[person] >= 65 && age[person] <= life[person]) {
             for (int i = 0; i < irmaaTbl.length; i++) {
-                if (income <= irmaaTbl[i][0]) {
-                    return (long) (irmaaTbl[i][1] + irmaaTbl[i][2]) * 12;
+                if (income <= irmaaTbl[i][idx]) {
+                    return (long) (irmaaTbl[i][2] + irmaaTbl[i][3]) * 12;
                 }
             }
         }
@@ -359,7 +406,7 @@ public class RothConversionCalculator {
         int idx = (isJoint ? 1 : 2);
         double tax = 0;
         for (int i = 0; i < taxRate.length; i++) {
-            if (income > taxRate[i][1]) {
+            if (income > taxRate[i][idx]) {
                 if (i < taxRate.length - 1 && income > taxRate[i + 1][idx]) {
                     tax += (taxRate[i + 1][idx] - taxRate[i][idx]) * 0.01 * taxRate[i][0];
                 } else {

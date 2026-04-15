@@ -12,7 +12,7 @@
    - Growth assumptions
    - Retirement horizon
 
-    The goal is to minimize lifetime tax liability while maximizing after-tax Roth IRA growth.
+   The goal is to minimize lifetime tax liability while maximizing after-tax Roth IRA growth.
 
 3. Features:
    - Optimize yearly IRA → Roth conversions
@@ -22,15 +22,18 @@
 
 4. Usage:
    
-    IraRothPlanner 
+    IraRothPlanner
    --ira={100000,180000}
-   --age={60,59}
-   --fixIncome=12000
+   --spending=110000
    --ssnIncome={18000,28000}
-   --payTaxInIra=true
+   --brokerage={35000,54380}
    --investRtn=0.05
-   --yearBegin=2026
-   --born={1967,1970}
+   --inflation=0.025
+   --yearBegin=2025
+   --born={1965,1968}
+   --propertyTax=2000
+   --donation=2000
+   --mortgage=20000
 
 7. Contributing:
    
