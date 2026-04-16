@@ -208,7 +208,7 @@ public class RothConversionCalculator {
         return taxableIncome;
     }
 
-    RothConvResults rothBalance(double spending, double convertion, int noCalYears) {
+    RothConvResults rothBalance(double spending, double taxableIncomeGoal, int noCalYears) {
         int[] age = {yearBegin - born[0], yearBegin - born[1]};
         double[] iraBalance = iraBegin.clone();
         double totalTax = 0;
@@ -249,7 +249,7 @@ public class RothConversionCalculator {
             }
 
             // amount to convert is max of ira balance.
-            double convertAmount = Math.min(convertion, iraBalance[0] + iraBalance[1]);
+            double convertAmount = Math.min(taxableIncomeGoal - taxableIncome, iraBalance[0] + iraBalance[1]);
             double[] convRatio = convRatio(iraBalance, age, convertAmount);
             if (convertAmount > 0) {
                 for (int person = 0; person < 2; person++) {
@@ -302,6 +302,7 @@ public class RothConversionCalculator {
             }
             brokBalance[1] *= (1 + investRtn);
             spending *= (1 + inflation);
+            taxableIncomeGoal *= (1 + inflation);
             noCalYears--;
             for (double[] i : fedTaxBracket) {
                 i[1] *= (1 + inflation);

@@ -37,14 +37,14 @@ class RothConversionCalculatorTest {
         assertEquals((long)a3.brok, 643661);
         assertEquals((long)a3.totalTax, 326667);
         RothConvResults a4 = rothConversionCalculator.rothBalance(spending, 360000 - spending, 0);
-        assertEquals((long)a4.roth, 2867773);
+        assertEquals((long)a4.roth, 2852287);
         assertEquals((long)a4.brok, 0);
-        assertEquals((long)a4.totalTax, 168362);
+        assertEquals((long)a4.totalTax, 167212);
 
         RothConvResults a = rothConversionCalculator.optimalConversion(0);
-        assertEquals(a.roth, 3866103.518613704);
+        assertEquals(a.roth, 3865676.2580309077);
         assertEquals(a.brok, 0.0);
-        assertEquals(a.totalTax, 78363.0);
+        assertEquals(a.totalTax, 72663.0);
     }
 
     @Test
