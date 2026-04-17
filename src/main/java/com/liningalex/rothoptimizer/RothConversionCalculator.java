@@ -171,12 +171,14 @@ public class RothConversionCalculator {
 
     double[] withDrawBrokerage(double[] brokBalance, double amount) {
         double[] rtn = {0, 0};
-        if (brokBalance[1] > 0) {
-
+        if (amount > 0 && brokBalance[1] > 0) {
             rtn[0] = Math.min(amount, brokBalance[1]);
             rtn[1] = rtn[0] * (brokBalance[1] - brokBalance[0]) / brokBalance[1];
             brokBalance[0] -= rtn[0] * brokBalance[0] / brokBalance[1];
             brokBalance[1] -= rtn[0];
+        } else if (amount < 0) {
+            brokBalance[0] -= amount;
+            brokBalance[1] -= amount;
         }
         return rtn;
     }
@@ -221,15 +223,14 @@ public class RothConversionCalculator {
         double[] ssnIncome = this.ssnIncome.clone();
         List<RothConvResults.YearConvResults> yearConvResultsList = new ArrayList<>();
         for (int year = yearBegin; (age[0] <= life[0]) || (age[1] <= life[1]); year++) {
-            double taxableIncome = withDraw(spending, brokBalance, iraBalance, rothBalance);
+            double taxableIncome = ssnIncome(age, 0, ssnIncome) + ssnIncome(age, 1, ssnIncome);
+            taxableIncome += withDraw(spending - taxableIncome, brokBalance, iraBalance, rothBalance);
 
             double[] toRoth = new double[2];
             double[] medicareOrig = new double[2];
             double[] medicare = new double[2];
             boolean isJoint = true;
             for (int person = 0; person < 2; person++) {
-                // social security taxableIncome
-                taxableIncome += ssnIncome(age, person, ssnIncome);
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 brokBalance[0] += rmd[person];
