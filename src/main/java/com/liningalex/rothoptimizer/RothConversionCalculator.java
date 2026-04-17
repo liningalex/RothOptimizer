@@ -80,7 +80,7 @@ public class RothConversionCalculator {
     public final long calDeductionDefault = 11080;
     final int[] rmdAge = new int[2];
     final int[] born;
-    public final int[] life = {88, 89};
+    public final int[] life = {90, 95};
     final double[] iraBegin;
     final double[] brokBegin;
     final double spending;
@@ -327,9 +327,6 @@ public class RothConversionCalculator {
             if (age[1] > life[1]) {
                 iraBalance[0] += iraBalance[1];
                 iraBalance[1] = 0;
-            }
-            if (rothBalance[0] < 0 || rothBalance[1] < 0) {
-                break;
             }
         }
         double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxBracket, false);
