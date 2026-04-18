@@ -183,15 +183,16 @@ public class RothConversionCalculator {
             double[] medicareOrig = new double[2];
             double[] medicare = new double[2];
             boolean isJoint = true;
+            rmdBalance += fixIncome;
             for (int person = 0; person < 2; person++) {
                 // social security income
                 income += ssnIncome(age, person);
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 rmdBalance += rmd[person];
-                iraBalance[person] -= rmd[person];
                 income += rmd[person];
                 medicareOrig[person] = medicarePreminus(age, income, person);
+                rmdBalance += medicareOrig[person];
                 if (age[person] > life[person]) {
                     isJoint = false;
                 }
@@ -274,6 +275,7 @@ public class RothConversionCalculator {
                 iraBalance[person] *= (1 + investRtn);
                 rothBalance[person] *= (1 + investRtn);
             }
+
             rmdBalance *= (1 + investRtn);
         }
         double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate, false);
