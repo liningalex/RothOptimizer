@@ -82,6 +82,7 @@ public class RothConversionCalculator {
     final double[] iraBegin;
     final double fixIncome;
     final double investRtn;
+    final double inflation;
     final double[] ssnIncome;
     final int[] ssnAge;
     final int yearBegin;
@@ -90,8 +91,8 @@ public class RothConversionCalculator {
     final int donation;
     boolean payTaxInIra;
 
-    long fedDeduction(int[] age, double income, boolean calTax) {
-        long stdAmount = this.fedDeductionDefault;
+    long fedDeduction(int[] age, double income, boolean calTax, int years) {
+        long stdAmount = (long) (this.fedDeductionDefault * Math.pow(1 + inflation, years));
         boolean isJoint = true;
         for (int person = 0; person < 2; person++) {
             if (age[person] >= 65) {
@@ -107,14 +108,14 @@ public class RothConversionCalculator {
         long localTax = 0;
         if (income < 505000) {
             if (calTax)
-                localTax = taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                localTax = taxAmount(income - calDeduction(age, years), calTaxRate, isJoint, years);
             itemized = Math.min(localTax + mortgage + propertyTax + donation, 40400);
         } else {
             if (calTax)
-                localTax = taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                localTax = taxAmount(income - calDeduction(age, years), calTaxRate, isJoint, years);
             itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
         }
-        double ssnDeduction = ssnIncome(age, 0) + ssnIncome(age, 1);
+        double ssnDeduction = ssnIncome(age, 0, years) + ssnIncome(age, 1, years);
         if (income > 44000)
             ssnDeduction *= 0.15;
         else if (income > 32000)
@@ -123,15 +124,16 @@ public class RothConversionCalculator {
         return Math.max(stdAmount, itemized) + (long) ssnDeduction;
     }
 
-    long calDeduction(int[] age) {
-        double ssnIncome = ssnIncome(age, 0) + ssnIncome(age, 1);
-        return Math.max(calDeductionDefault, donation + mortgage + propertyTax) + (long) ssnIncome;
+    long calDeduction(int[] age, int years) {
+        double ssnIncome = ssnIncome(age, 0, years) + ssnIncome(age, 1, years);
+        return (long) (Math.max(calDeductionDefault * Math.pow(1 + inflation, years), donation + mortgage + propertyTax) + (long) ssnIncome);
     }
 
-    public RothConversionCalculator(double fixIncome, double investRtn, double[] ira, double[] ssnIncome, int[] ssnAge,
+    public RothConversionCalculator(double fixIncome, double investRtn, double inflation, double[] ira, double[] ssnIncome, int[] ssnAge,
                                     int yearBegin, boolean paytaxInIra, int[] born, int propertyTax, int mortgage, int donation) {
         this.fixIncome = fixIncome;
         this.investRtn = investRtn;
+        this.inflation = inflation;
         this.iraBegin = ira.clone();
         this.ssnIncome = ssnIncome;
         this.ssnAge = ssnAge;
@@ -162,9 +164,9 @@ public class RothConversionCalculator {
             return 75;
     }
 
-    double ssnIncome(int[] age, int person) {
+    double ssnIncome(int[] age, int person, int years) {
         if (age[person] >= ssnAge[person] && age[person] < life[person]) {
-            return ssnIncome[person];
+            return ssnIncome[person] * Math.pow(1 + inflation, years);
         } else
             return 0;
     }
@@ -176,8 +178,10 @@ public class RothConversionCalculator {
         double[] rothBalance = new double[2];
         double rmdBalance = 0;
         double[] rmd = new double[2];
+        int years = 0;
         List<RothConvResults.YearConvResults> yearConvResultsList = new ArrayList<>();
         for (int year = yearBegin; (age[0] < life[0]) || (age[1] < life[1]); year++) {
+            years = year - yearBegin;
             double income = fixIncome;
             double[] toRoth = new double[2];
             double[] medicareOrig = new double[2];
@@ -186,12 +190,12 @@ public class RothConversionCalculator {
             rmdBalance += fixIncome;
             for (int person = 0; person < 2; person++) {
                 // social security income
-                income += ssnIncome(age, person);
+                income += ssnIncome(age, person, years);
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 rmdBalance += rmd[person];
                 income += rmd[person];
-                medicareOrig[person] = medicarePreminus(age, income, person);
+                medicareOrig[person] = medicarePreminus(age, income, person, years);
                 rmdBalance += medicareOrig[person];
                 if (age[person] > life[person]) {
                     isJoint = false;
@@ -199,9 +203,9 @@ public class RothConversionCalculator {
             }
 
             // original tax amount.
-            double taxOrig = taxAmount(income - fedDeduction(age, income, incCalTax), fedTaxRate, isJoint);
+            double taxOrig = taxAmount(income - fedDeduction(age, income, incCalTax, years), fedTaxRate, isJoint, years);
             if (incCalTax) {
-                taxOrig += taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                taxOrig += taxAmount(income - calDeduction(age, years), calTaxRate, isJoint, years);
             }
 
             // amount to convert is max of ira balance.
@@ -218,15 +222,15 @@ public class RothConversionCalculator {
                 }
 
                 // tax amount with updated income.
-                double tax = taxAmount(income - fedDeduction(age, income, incCalTax), fedTaxRate, isJoint);
+                double tax = taxAmount(income - fedDeduction(age, income, incCalTax, years), fedTaxRate, isJoint, years);
                 if (incCalTax) {
-                    tax += taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                    tax += taxAmount(income - calDeduction(age, years), calTaxRate, isJoint, years);
                 }
 
                 // medicare diffs with updated income.
                 double medicareDiff = 0;
                 for (int person = 0; person < 2; person++) {
-                    medicareDiff += medicarePreminus(age, income, person) - medicareOrig[person];
+                    medicareDiff += medicarePreminus(age, income, person, years) - medicareOrig[person];
                 }
 
                 // extra tax caused by conversion.
@@ -256,16 +260,16 @@ public class RothConversionCalculator {
             }
 
             // tax with final updated income.
-            long fedDeduction = fedDeduction(age, income, incCalTax);
-            double fedTax = taxAmount(income - fedDeduction, fedTaxRate, isJoint);
+            long fedDeduction = fedDeduction(age, income, incCalTax, years);
+            double fedTax = taxAmount(income - fedDeduction, fedTaxRate, isJoint, years);
             double calTax = 0;
             if (incCalTax) {
-                calTax = taxAmount(income - calDeduction(age), calTaxRate, isJoint);
+                calTax = taxAmount(income - calDeduction(age, years), calTaxRate, isJoint, years);
             }
             totalTax += fedTax + calTax;
             // medicare with the final income.
             for (int person = 0; person < 2; person++) {
-                medicare[person] = medicarePreminus(age, income, person);
+                medicare[person] = medicarePreminus(age, income, person, years);
             }
 
             yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, income, fedTax, calTax, fedDeduction));
@@ -278,9 +282,9 @@ public class RothConversionCalculator {
 
             rmdBalance *= (1 + investRtn);
         }
-        double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate, false);
+        double lastTax = taxAmount(iraBalance[0] + iraBalance[1] - fedDeductionDefault, fedTaxRate, false, years);
         if (incCalTax) {
-            lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age), calTaxRate, false);
+            lastTax += taxAmount(iraBalance[0] + iraBalance[1] - calDeduction(age, years), calTaxRate, false, years);
         }
         double[] convRatio = convRatio(iraBalance, age);
         for (int person = 0; person < 2; person++) {
@@ -345,27 +349,27 @@ public class RothConversionCalculator {
         return (long) rmd;
     }
 
-    long medicarePreminus(int[] age, double income, int person) {
+    long medicarePreminus(int[] age, double income, int person, int years) {
         double preminus = 0;
         if (age[person] >= 65 && age[person] < life[person]) {
             for (int i = 0; i < irmaaTbl.length; i++) {
                 if (income <= irmaaTbl[i][0]) {
-                    return (long) (irmaaTbl[i][1] + irmaaTbl[i][2]) * 12;
+                    return (long) ((long) (irmaaTbl[i][1] + irmaaTbl[i][2]) * 12 * Math.pow(1 + inflation, years));
                 }
             }
         }
         return (long) preminus;
     }
 
-    long taxAmount(double income, double[][] taxRate, boolean isJoint) {
+    long taxAmount(double income, double[][] taxRate, boolean isJoint, int years) {
         int idx = (isJoint ? 1 : 2);
         double tax = 0;
         for (int i = 0; i < taxRate.length; i++) {
-            if (income > taxRate[i][1]) {
-                if (i < taxRate.length - 1 && income > taxRate[i + 1][idx]) {
-                    tax += (taxRate[i + 1][idx] - taxRate[i][idx]) * 0.01 * taxRate[i][0];
+            if (income > taxRate[i][idx] * Math.pow(1 + inflation, years)) {
+                if (i < taxRate.length - 1 && income > taxRate[i + 1][idx] * Math.pow(1 + inflation, years)) {
+                    tax += (taxRate[i + 1][idx] - taxRate[i][idx]) *  Math.pow(1 + inflation, years)* 0.01 * taxRate[i][0];
                 } else {
-                    tax += (income - taxRate[i][idx]) * 0.01 * taxRate[i][0];
+                    tax += (income - taxRate[i][idx] * Math.pow(1 + inflation, years)) * 0.01 * taxRate[i][0];
                 }
             }
         }
