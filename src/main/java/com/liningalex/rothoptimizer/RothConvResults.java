@@ -4,19 +4,24 @@ import java.util.List;
 
 public class RothConvResults {
     List<YearConvResults> yearConvResultsList;
-    double income;
-    double roth;
-    double brok;
-    double lastTax;
-    double totalTax;
+    final double income;
+    final double roth;
+    final double brok;
+    final double ira;
+    final double totalTax;
+    final double asset;
+    final double totalAmd;
 
-    public RothConvResults(List<YearConvResults> yearConvResultsList, double income, double roth, double brok, double lastTax, double totalTax) {
+
+    public RothConvResults(List<YearConvResults> yearConvResultsList, double income, double roth, double brok, double ira, double totalTax, double asset, double totalAmd) {
         this.yearConvResultsList = yearConvResultsList;
         this.income = income;
         this.roth = roth;
         this.brok = brok;
-        this.lastTax = lastTax;
+        this.ira = ira;
         this.totalTax = totalTax;
+        this.asset = asset;
+        this.totalAmd = totalAmd;
     }
 
     public static class YearConvResults {
@@ -61,7 +66,7 @@ public class RothConvResults {
     @Override
     public String toString() {
         return String.join("\n", yearConvResultsList.stream().map(String::valueOf).toList()) + "\n" +
-                String.format("income=%.0f,asset=%.0f(%.0f+%.0f),lastTax=%.0f,totalTax=%.0f",
-                        income, roth + brok, roth, brok, lastTax, totalTax + lastTax) + "\n";
+                String.format("income=%.0f,asset=%.0f(roth=%.0f, brokerage=%.0f, ira=%.0f),totalTax=%.0f",
+                        income, asset, roth, brok, ira, totalTax) + "\n";
     }
 }
