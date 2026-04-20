@@ -77,6 +77,7 @@ public class RothConversionCalculator {
     };
     public final long[] fedDeductionDefault = {15750, 31500};
     public final long[] calDeductionDefault = {5706, 11080};
+    public final long[][] ssnDeduction = {{44000, 34000}, {32000, 25000}};
     final int[] rmdAge = new int[2];
     final int[] born;
     public final int[] life = {90, 95};
@@ -92,7 +93,7 @@ public class RothConversionCalculator {
     final int donation;
 
     long fedDeduction(int[] age, double income, boolean calTax, int years, boolean isJoint) {
-        double stdAmount = this.fedDeductionDefault[ isJoint ? 1 : 0] * Math.pow(1 + inflation, years);
+        double stdAmount = this.fedDeductionDefault[isJoint ? 1 : 0] * Math.pow(1 + inflation, years);
         for (int person = 0; person < 2; person++) {
             if (age[person] >= 65) {
                 stdAmount += 1600;
@@ -114,13 +115,18 @@ public class RothConversionCalculator {
                 localTax = taxAmount(income - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
             itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
         }
-        double ssnDeduction = ssnIncome(age, 0, years) + ssnIncome(age, 1, years);
-        if (income > 44000)
-            ssnDeduction *= 0.15;
-        else if (income > 32000)
-            ssnDeduction *= 0.5;
 
-        return (long) (Math.max(stdAmount, itemized) + ssnDeduction);
+        return (long) (Math.max(stdAmount, itemized) + ssnDeduction(income, age, years, isJoint));
+    }
+
+    double ssnDeduction(double income, int[] age,  int years, boolean isJoint) {
+        double ssnIncome = ssnIncome(age, 0, years) + ssnIncome(age, 1, years);
+        int idx = isJoint ? 0 : 1;
+        if (income > ssnDeduction[0][idx])
+            ssnIncome *= 0.15;
+        else if (income > ssnDeduction[1][idx])
+            ssnIncome *= 0.5;
+        return ssnIncome;
     }
 
     long calDeduction(int[] age, int years, boolean isJoint) {
@@ -280,7 +286,8 @@ public class RothConversionCalculator {
 
                 // medicare with the final taxableIncome.
                 for (int person = 0; person < 2; person++) {
-                    medicare[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint, years);
+                    double ssnDeduct = ssnDeduction(taxableIncome, age, years, isJoint);
+                    medicare[person] = medicarePreminus(irmaaTbl, age, taxableIncome - ssnDeduct, person, isJoint, years);
                 }
 
                 income =  withDraw(fedTax + calTax - taxOrig + medicare[0] + medicare[1] - medicareOrig, brokBalance, iraBalance, rothBalance);
