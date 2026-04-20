@@ -418,13 +418,13 @@ public class RothConversionCalculator {
                 tax += (brackets[i][idx] * incRate - prevLimit) * brackets[i][0] * 0.01;
                 prevLimit = brackets[i][idx] * incRate;
             } else {
-                tax += (income - prevLimit) * brackets[i][0] * 0.01 *  incRate;
+                tax += (income - prevLimit) * brackets[i][0] * 0.01;
                 return tax;
             }
         }
 
         // top bracket (37%)
-        tax += (income - prevLimit) * brackets[brackets.length - 1][0] * 0.01 * incRate;
+        tax += (income - prevLimit) * brackets[brackets.length - 1][0] * 0.01;
         return tax;
     }
 }
