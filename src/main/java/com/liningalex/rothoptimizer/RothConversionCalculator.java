@@ -231,7 +231,7 @@ public class RothConversionCalculator {
         for (int year = yearBegin; (age[0] <= life[0]) || (age[1] <= life[1]); year++) {
             years = year - yearBegin;
             double[] toRoth = new double[2];
-            double[] medicareOrig = new double[2];
+            double medicareOrig;
             double[] medicare = new double[2];
             boolean isJoint = true;
             double income = 0;
@@ -241,23 +241,19 @@ public class RothConversionCalculator {
                 // rmd amount
                 rmd[person] = rmdAmount(age, iraBalance, person);
                 totalAmd += rmd[person];
-                // iraBalance[person] -= rmd[person];
+                iraBalance[person] -= rmd[person];
                 income += rmd[person];
-                // medicareOrig[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint);
                 if (age[person] > life[person]) {
                     isJoint = false;
                 }
             }
 
             double taxableIncome = income + withDraw(expense - income, brokBalance, iraBalance, rothBalance);
-            double medicareCost = medicarePreminus(irmaaTbl, age, taxableIncome, 0, isJoint, years) + medicarePreminus(irmaaTbl, age, taxableIncome, 1, isJoint, years);
-            taxableIncome += withDraw(medicareCost, brokBalance, iraBalance, rothBalance);
-            // original tax amount.
-            double taxOrig = tax(age, taxableIncome, noCalYears, years, isJoint);
+            medicareOrig = medicarePreminus(irmaaTbl, age, taxableIncome, 0, isJoint, years) + medicarePreminus(irmaaTbl, age, taxableIncome, 1, isJoint, years);
+            taxableIncome += withDraw(medicareOrig, brokBalance, iraBalance, rothBalance);
 
             // amount to convert is max of ira balance.
             double convertAmount = Math.min(taxableIncomeGoal - taxableIncome, iraBalance[0] + iraBalance[1]);
-            convertAmount -= tax(age, convertAmount, noCalYears, years, isJoint);
             double[] convRatio = convRatio(iraBalance, age, convertAmount);
             if (convertAmount > 0) {
                 for (int person = 0; person < 2; person++) {
@@ -268,19 +264,6 @@ public class RothConversionCalculator {
                         taxableIncome += toRoth[person];
                     }
                 }
-
-                // tax amount with updated taxableIncome.
-                double tax = tax(age, taxableIncome, noCalYears, years, isJoint);
-
-                // medicare diffs with updated taxableIncome.
-                double medicareDiff = 0;
-                for (int person = 0; person < 2; person++) {
-                    medicareDiff += medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint, years) - medicareOrig[person];
-                }
-
-                // extra tax caused by conversion.
-                double additionalTax = tax - taxOrig + medicareDiff;
-                taxableIncome += withDraw(additionalTax, brokBalance, iraBalance, rothBalance);
             }
 
             // tax with final updated taxableIncome.
@@ -296,7 +279,7 @@ public class RothConversionCalculator {
                 medicare[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint, years);
             }
 
-            withDraw(fedTax + calTax, brokBalance, iraBalance, rothBalance);
+            withDraw(fedTax + calTax + medicare[0] + medicare[1] - medicareOrig, brokBalance, iraBalance, rothBalance);
             yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, taxableIncome, fedTax, calTax, fedDeduction, brokBalance));
             // investment return;
             for (int person = 0; person < 2; person++) {
@@ -314,13 +297,12 @@ public class RothConversionCalculator {
             if (age[0] > life[0]) {
                 iraBalance[1] += iraBalance[0];
                 iraBalance[0] = 0;
-            }
-            if (age[1] > life[1]) {
+            } else if (age[1] > life[1]) {
                 iraBalance[0] += iraBalance[1];
                 iraBalance[1] = 0;
             }
         }
-        double asset = asset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, EVALUEMETHOD.AFTER10YEAR);
+        double asset = estimeateAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, EVALUEMETHOD.AFTER10YEAR);
         RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, expense, rothBalance[0] + rothBalance[1],
                 brokBalance[1], iraBalance[0] + iraBalance[1], totalTax, asset, totalAmd);
 
@@ -333,7 +315,7 @@ public class RothConversionCalculator {
         AFTER10YEAR,
         IMMDIEATE
     }
-    double asset(double roth, double brokerage[], double ira, int years, EVALUEMETHOD eMothod) {
+    double estimeateAsset(double roth, double brokerage[], double ira, int years, EVALUEMETHOD eMothod) {
         int[] age = {50, 50};
         if (eMothod == EVALUEMETHOD.AFTER10YEAR) {
             roth = roth * Math.pow(1 + investRtn, 10);
@@ -390,7 +372,6 @@ public class RothConversionCalculator {
         double rmd = 0;
         if (age[person] >= rmdAge[person] && ira[person] > 0 && age[person] <= life[person]) {
             rmd = ira[person] / rmdTable[age[person] - rmdAge[person]];
-            ira[person] -= rmd;
         }
         return (long) rmd;
     }

@@ -89,7 +89,7 @@ class RothConversionCalculatorTest {
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 0, 100);
             assertEquals((long) a1.roth, 0);
             assertEquals((long) a1.brok, 0);
-            assertEquals((long) a1.ira, 10116);
+            assertEquals((long) a1.ira, 10117);
             assertEquals((long) a1.yearConvResultsList.get(0).medicare[0] + a1.yearConvResultsList.get(0).medicare[1], 7776.0);
             assertEquals((long) a1.totalTax, 2107);
         }
@@ -106,7 +106,7 @@ class RothConversionCalculatorTest {
             RothConversionCalculator rothConversionCalculator =
                     new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0);
             RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
-            assertEquals((long) a1.roth, -2);
+            assertEquals((long) a1.roth, 0);
             assertEquals((long) a1.brok, 0);
             assertEquals((long) a1.ira, 0);
             assertEquals((long) a1.totalTax, 0);
@@ -165,7 +165,7 @@ class RothConversionCalculatorTest {
         double[] ira = {1000000, 0};
         long a = rothConversionCalculator.rmdAmount(age, ira, 0);
         assertEquals(a, 37735);
-        assertEquals((long) ira[0], 962264);
+        assertEquals((long) ira[0], 1000000);
     }
 
     @Test

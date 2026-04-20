@@ -40,7 +40,7 @@ public class IraRothPlanner {
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, ssnIncome, ssnAge,
                     yearBegin, born, propertyTax, mortgage, donation, inflation);
             System.out.println("No optmiazation, no state tax");
-            //System.out.println(rothConversionCalculator.rothBalance(expense, ira[0] + ira[1], 1));
+            System.out.println(rothConversionCalculator.rothBalance(expense, ira[0] + ira[1], 1));
             System.out.println("No optmiazation, having state tax");
             System.out.println(rothConversionCalculator.rothBalance(expense, 0, 0));
             System.out.println("Having optmiazation, having state tax");
