@@ -75,8 +75,8 @@ public class RothConversionCalculator {
             10.8, 10.1, 9.5, 8.9, 8.4, 7.8, 7.3, 6.8, 6.4, 6.0, 5.6, 5.2
 
     };
-    public final long fedDeductionDefault = 31500;
-    public final long calDeductionDefault = 11080;
+    public final long[] fedDeductionDefault = {15750, 31500};
+    public final long[] calDeductionDefault = {5706, 11080};
     final int[] rmdAge = new int[2];
     final int[] born;
     public final int[] life = {90, 95};
@@ -91,9 +91,8 @@ public class RothConversionCalculator {
     final int mortgage;
     final int donation;
 
-    long fedDeduction(int[] age, double income, boolean calTax, int years) {
-        double stdAmount = this.fedDeductionDefault * Math.pow(1 + inflation, years);
-        boolean isJoint = true;
+    long fedDeduction(int[] age, double income, boolean calTax, int years, boolean isJoint) {
+        double stdAmount = this.fedDeductionDefault[ isJoint ? 1 : 0] * Math.pow(1 + inflation, years);
         for (int person = 0; person < 2; person++) {
             if (age[person] >= 65) {
                 stdAmount += 1600;
@@ -108,11 +107,11 @@ public class RothConversionCalculator {
         long localTax = 0;
         if (income < 505000) {
             if (calTax)
-                localTax = taxAmount(income - calDeduction(age, years), calTaxBracket, isJoint, years);
+                localTax = taxAmount(income - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
             itemized = Math.min(localTax + mortgage + propertyTax + donation, 40400);
         } else {
             if (calTax)
-                localTax = taxAmount(income - calDeduction(age, years), calTaxBracket, isJoint, years);
+                localTax = taxAmount(income - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
             itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
         }
         double ssnDeduction = ssnIncome(age, 0, years) + ssnIncome(age, 1, years);
@@ -124,9 +123,9 @@ public class RothConversionCalculator {
         return (long) (Math.max(stdAmount, itemized) + ssnDeduction);
     }
 
-    long calDeduction(int[] age, int years) {
+    long calDeduction(int[] age, int years, boolean isJoint) {
         double ssnInc = ssnIncome(age, 0, years) + ssnIncome(age, 1, years);
-        return (long) (Math.max(calDeductionDefault * Math.pow(1 + inflation, years), donation + mortgage + propertyTax) + (long) ssnInc);
+        return (long) (Math.max(calDeductionDefault[isJoint ? 1 : 0] * Math.pow(1 + inflation, years), donation + mortgage + propertyTax) + (long) ssnInc);
     }
 
     public RothConversionCalculator(double ivtReturn, double[] ira, double[] brok, double[] ssnIncome, int[] ssnAge,
@@ -209,11 +208,11 @@ public class RothConversionCalculator {
     }
 
     double tax(int[] age, double taxableIncome, int noCalYears, int years, boolean isJoint) {
-        long fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years);
+        long fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years, isJoint);
         double fedTax = taxAmount(taxableIncome - fedDeduction, fedTaxBracket, isJoint, years);
         double calTax = 0;
         if (noCalYears <= 0) {
-            calTax = taxAmount(taxableIncome - calDeduction(age, years), calTaxBracket, isJoint, years);
+            calTax = taxAmount(taxableIncome - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
         }
         return fedTax + calTax;
     }
@@ -267,11 +266,11 @@ public class RothConversionCalculator {
             }
 
             // tax with final updated taxableIncome.
-            long fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years);
+            long fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years, isJoint);
             double fedTax = taxAmount(taxableIncome - fedDeduction, fedTaxBracket, isJoint, years);
             double calTax = 0;
             if (noCalYears <= 0) {
-                calTax = taxAmount(taxableIncome - calDeduction(age, years), calTaxBracket, isJoint, years);
+                calTax = taxAmount(taxableIncome - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
             }
             totalTax += fedTax + calTax;
             // medicare with the final taxableIncome.
@@ -335,7 +334,7 @@ public class RothConversionCalculator {
     RothConvResults optimalConversion(double expense, int noCalYears) {
         double maxAsset = -Double.MAX_VALUE;
         RothConvResults best = null;
-        for (double i = expense / 2; i < iraBegin[0] + iraBegin[1]; i += 100) {
+        for (double i = expense; i < iraBegin[0] + iraBegin[1]; i += 500) {
             RothConvResults results = rothBalance(expense, i, noCalYears);
             if (results.asset > maxAsset) {
                 maxAsset = results.asset;
