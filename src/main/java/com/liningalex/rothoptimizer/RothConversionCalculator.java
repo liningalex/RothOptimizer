@@ -402,7 +402,7 @@ public class RothConversionCalculator {
         if (age[person] >= 65 && age[person] <= life[person]) {
             for (int i = 0; i < irmaaTbl.length; i++) {
                 if (income <= irmaaTbl[i][idx] * incRate) {
-                    return (long) (irmaaTbl[i][2] + irmaaTbl[i][3]) * 12;
+                    return (long) ((long) (irmaaTbl[i][2] + irmaaTbl[i][3]) * 12 * incRate);
                 }
             }
         }
