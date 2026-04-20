@@ -19,7 +19,7 @@ class RothConversionCalculatorTest {
     double inflation = 0.025;
 
     RothConversionCalculator rothConversionCalculator =
-            new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation);
+            new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
 
     @Test
     void rothBalanceSsnIncome1() {
@@ -28,7 +28,7 @@ class RothConversionCalculatorTest {
         double[] ira = {0, 0};
         double[] brok = {0, 0};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation);
+                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
         RothConvResults a1 = rothConversionCalculator.rothBalance(12000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 12840);
@@ -40,7 +40,7 @@ class RothConversionCalculatorTest {
         double[] ssnIncome = {1000 * 12, 1000 * 12};
         int[] born = {1937, 1932};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation);
+                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
         RothConvResults a1 = rothConversionCalculator.rothBalance(12000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 26899);
@@ -55,7 +55,7 @@ class RothConversionCalculatorTest {
         double[] ssnIncome = {0, 0};
         double[] ira = {0, 0};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation);
+                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
         RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 21400);
@@ -70,7 +70,7 @@ class RothConversionCalculatorTest {
         double[] ssnIncome = {0, 0};
         double[] ira = {0, 0};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0);
+                new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
         RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 0);
@@ -85,7 +85,7 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {40000, 40000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 0, 100);
             assertEquals((long) a1.roth, 0);
             assertEquals((long) a1.brok, 0);
@@ -104,7 +104,7 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {20000, 20000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
             RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
             assertEquals((long) a1.roth, 0);
             assertEquals((long) a1.brok, 0);
@@ -121,7 +121,7 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {80000, 80000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 72000, 100);
             assertEquals((long) a1.roth, 12000);
             assertEquals((long) a1.brok, 0);
@@ -139,7 +139,7 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {80000, 80000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 72000, 100);
             assertEquals((long) a1.roth, 17413);
             assertEquals((long) a1.brok, 0);

@@ -85,6 +85,7 @@ public class RothConversionCalculator {
     final double[] brokBegin;
     final double inflation;
     final double investRtn;
+    final EvaluateMethod evaluateMethod;
     final double[] ssnIncome;
     final int[] ssnAge;
     final int yearBegin;
@@ -135,8 +136,9 @@ public class RothConversionCalculator {
     }
 
     public RothConversionCalculator(double ivtReturn, double[] ira, double[] brok, double[] ssnIncome, int[] ssnAge,
-                                    int yearBegin, int[] born, int propertyTax, int mortgage, int donation, double inflation) {
+                                    int yearBegin, int[] born, int propertyTax, int mortgage, int donation, double inflation, EvaluateMethod evaluateMethod) {
         this.investRtn = ivtReturn;
+        this.evaluateMethod = evaluateMethod;
         this.iraBegin = ira.clone();
         this.brokBegin = brok.clone();
         this.ssnIncome = ssnIncome;
@@ -322,7 +324,7 @@ public class RothConversionCalculator {
                 iraBalance[1] = 0;
             }
         }
-        double asset = estimeateAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, EVALUEMETHOD.AFTER10YEAR);
+        double asset = evaluatedAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, evaluateMethod);
         RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, expense, rothBalance[0] + rothBalance[1],
                 brokBalance[1], iraBalance[0] + iraBalance[1], totalTax, asset, totalAmd);
 
@@ -330,23 +332,24 @@ public class RothConversionCalculator {
     }
 
 
-    public enum EVALUEMETHOD {
-        ROTH,
-        AFTER10YEAR,
-        IMMDIEATE,
-        TOTAL
+    public enum EvaluateMethod {
+        MAX_ROTH,
+        MAX_10_YEARS,
+        MAX_0_YEARS,
+        MAX_TOTAL
     }
-    double estimeateAsset(double roth, double brokerage[], double ira, int years, EVALUEMETHOD eMothod) {
+
+    double evaluatedAsset(double roth, double brokerage[], double ira, int years, EvaluateMethod eMothod) {
         int[] age = {50, 50};
-        if (eMothod == EVALUEMETHOD.AFTER10YEAR) {
+        if (eMothod == EvaluateMethod.MAX_10_YEARS) {
             roth = roth * Math.pow(1 + investRtn, 10);
             ira = ira * Math.pow(1 + investRtn, 10);
             brokerage[0] = brokerage[1];
             brokerage[1] = brokerage[1] * Math.pow(1 + investRtn, 10);
             return (roth + ira + brokerage[1] - tax(age, (ira + brokerage[1] - brokerage[0]) / 10, 0, 5, true) * 10) / Math.pow(1 + investRtn, 10);
-        } else if (eMothod == EVALUEMETHOD.ROTH) {
+        } else if (eMothod == EvaluateMethod.MAX_ROTH) {
             return roth;
-        } else if (eMothod == EVALUEMETHOD.IMMDIEATE) {
+        } else if (eMothod == EvaluateMethod.MAX_0_YEARS) {
             return (roth + ira + brokerage[1] - tax(age, ira, 0, 0, true));
         } else {
             return roth + ira + brokerage[1];

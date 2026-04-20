@@ -21,6 +21,7 @@ public class IraRothPlanner {
         options.addOption("t", "propertyTax", true, "property tax");
         options.addOption("m", "mortgage", true, "mortgage interest");
         options.addOption("d", "donation", true, "donation");
+        options.addOption("g", "investGoal", true, "investment goal");
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -36,9 +37,10 @@ public class IraRothPlanner {
             int propertyTax = Integer.parseInt(cmd.getOptionValue("propertyTax", "0"));
             int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
             int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
+            RothConversionCalculator.EvaluateMethod evaluateMethod = RothConversionCalculator.EvaluateMethod.valueOf(cmd.getOptionValue("investGoal", "MAX_10_YEARS"));
 
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, ssnIncome, ssnAge,
-                    yearBegin, born, propertyTax, mortgage, donation, inflation);
+                    yearBegin, born, propertyTax, mortgage, donation, inflation, evaluateMethod);
             System.out.println("No optmiazation, no state tax");
             System.out.println(rothConversionCalculator.rothBalance(expense, ira[0] + ira[1], 1));
             System.out.println("No optmiazation, having state tax");
