@@ -59,7 +59,7 @@ public class RothConvResults {
                             "=(%8.0f,%2.2f),rmd=(%6.0f,%6.0f),conv=(%6.0f,%6.0f), AGI=%.0f-%d," +
                             "medicare=%5.0f,tax=(%6.0f+%6.0f),%2.1f%%",
                     year, age[0], age[1], ira[0], ira[1], roth[0], roth[1], brok[1] , brok[0] > 0 ? brok[1] / brok[0] : 0, rmd[0], rmd[1], toRoth[0], toRoth[1], income, fedDeduction,
-                    medicare[0] + medicare[1], fedTax, calTax, (fedTax + calTax) / income * 100);
+                    medicare[0] + medicare[1], fedTax, calTax, (income > 0 ? (fedTax + calTax) / income * 100 : 0));
         }
     }
 

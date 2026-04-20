@@ -7,22 +7,22 @@ public class RothConversionCalculator {
 
     public final double[][] fedTaxBracket = {
             {
-                    10, 0, 0
+                    10, 23850, 11925
             },
             {
-                    12, 23850, 11925
+                    12, 96950, 48475
             },
             {
-                    22, 96950, 48475
+                    22, 206700, 103350
             },
             {
-                    24, 206700, 103350
+                    24, 394600, 197300
             },
             {
                     32, 394600, 197300
             },
             {
-                    35, 501050, 250525
+                    35, 751600, 626350
             },
             {
                     37, 751600, 626350
@@ -41,27 +41,27 @@ public class RothConversionCalculator {
 
     public final double[][] calTaxBracket = {
             {
-                    1, 0, 0
+                    1, 21512, 10757
             },
             {
-                    2, 21512, 10757
+                    2, 50999, 25499
             },
             {
-                    4, 50999, 25499
+                    4, 80491, 40245
             },
             {
-                    6, 80491, 40245
+                    6, 111733, 55866
             },
             {
-                    8, 111733, 55866
+                    8, 141213, 70606
             },
             {
-                    9.3, 141213, 70606
+                    9.3, 721319, 360659
             },
-            {10.3, 721319, 360659
+            {10.3, 865575, 432787
             },
             {
-                    11.3, 865575, 432787
+                    11.3, 1442628, 721314
             },
             {
                     12.3, 1442628, 721314
@@ -103,8 +103,8 @@ public class RothConversionCalculator {
                 isJoint = false;
             }
         }
-        long itemized = 0;
-        long localTax = 0;
+        double itemized = 0;
+        double localTax = 0;
         if (income < 505000) {
             if (calTax)
                 localTax = taxAmount(income - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
@@ -230,7 +230,6 @@ public class RothConversionCalculator {
         for (int year = yearBegin; (age[0] <= life[0]) || (age[1] <= life[1]); year++) {
             years = year - yearBegin;
             double[] toRoth = new double[2];
-            double medicareOrig;
             double[] medicare = new double[2];
             boolean isJoint = true;
             double income = 0;
@@ -248,8 +247,6 @@ public class RothConversionCalculator {
             }
 
             double taxableIncome = income + withDraw(expense - income, brokBalance, iraBalance, rothBalance);
-            medicareOrig = medicarePreminus(irmaaTbl, age, taxableIncome, 0, isJoint, years) + medicarePreminus(irmaaTbl, age, taxableIncome, 1, isJoint, years);
-            taxableIncome += withDraw(medicareOrig, brokBalance, iraBalance, rothBalance);
 
             // amount to convert is max of ira balance.
             double convertAmount = Math.min(taxableIncomeGoal - taxableIncome, iraBalance[0] + iraBalance[1]);
@@ -265,20 +262,37 @@ public class RothConversionCalculator {
                 }
             }
 
-            // tax with final updated taxableIncome.
-            long fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years, isJoint);
-            double fedTax = taxAmount(taxableIncome - fedDeduction, fedTaxBracket, isJoint, years);
+            double taxOrig = 0;
+            double fedTax = 0;
             double calTax = 0;
-            if (noCalYears <= 0) {
-                calTax = taxAmount(taxableIncome - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
-            }
-            totalTax += fedTax + calTax;
-            // medicare with the final taxableIncome.
-            for (int person = 0; person < 2; person++) {
-                medicare[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint, years);
+            long fedDeduction = 0;
+            double medicareOrig = 0;
+            // tax with final updated taxableIncome.
+            while (true) {
+                if (taxableIncome > 1000000) {
+                    // System.out.println("hello");
+                }
+                fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years, isJoint);
+                fedTax = taxAmount(taxableIncome - fedDeduction, fedTaxBracket, isJoint, years);
+                if (noCalYears <= 0) {
+                    calTax = taxAmount(taxableIncome - calDeduction(age, years, isJoint), calTaxBracket, isJoint, years);
+                }
+
+                // medicare with the final taxableIncome.
+                for (int person = 0; person < 2; person++) {
+                    medicare[person] = medicarePreminus(irmaaTbl, age, taxableIncome, person, isJoint, years);
+                }
+
+                income =  withDraw(fedTax + calTax - taxOrig + medicare[0] + medicare[1] - medicareOrig, brokBalance, iraBalance, rothBalance);
+                if (income < 100) {
+                    break;
+                }
+                taxableIncome += income;
+                taxOrig = fedTax + calTax;
+                medicareOrig = medicare[0] + medicare[1];
             }
 
-            withDraw(fedTax + calTax + medicare[0] + medicare[1] - medicareOrig, brokBalance, iraBalance, rothBalance);
+            totalTax += fedTax + calTax;
             yearConvResultsList.add(new RothConvResults.YearConvResults(year, age, iraBalance, rothBalance, rmd, toRoth, medicare, taxableIncome, fedTax, calTax, fedDeduction, brokBalance));
             // investment return;
             for (int person = 0; person < 2; person++) {
@@ -312,7 +326,8 @@ public class RothConversionCalculator {
     public enum EVALUEMETHOD {
         ROTH,
         AFTER10YEAR,
-        IMMDIEATE
+        IMMDIEATE,
+        TOTAL
     }
     double estimeateAsset(double roth, double brokerage[], double ira, int years, EVALUEMETHOD eMothod) {
         int[] age = {50, 50};
@@ -389,22 +404,27 @@ public class RothConversionCalculator {
         return (long) preminus;
     }
 
-    long taxAmount(double income, double[][] taxRate, boolean isJoint, int years) {
+    double taxAmount(double income, double[][] brackets, boolean isJoint, int years) {
+        if (income <= 0) {
+            return 0;
+        }
         int idx = (isJoint ? 1 : 2);
-        double tax = 0;
+        long tax = 0;
         double incRate = Math.pow(1 + inflation, years);
-        for (int i = 0; i < taxRate.length; i++) {
-            if (income > taxRate[i][idx] * incRate) {
-                if (i < taxRate.length - 1 && income > taxRate[i + 1][idx] * incRate) {
-                    tax += (taxRate[i + 1][idx] - taxRate[i][idx]) * incRate * 0.01 * taxRate[i][0];
-                } else {
-                    tax += (income - taxRate[i][idx]) * 0.01 * taxRate[i][0] * incRate;
-                }
+        double prevLimit = 0.0;
+
+        for (int i = 0; i < brackets.length - 1; i++) {
+            if (income > brackets[i][idx] * incRate) {
+                tax += (brackets[i][idx] * incRate - prevLimit) * brackets[i][0] * 0.01;
+                prevLimit = brackets[i][idx] * incRate;
+            } else {
+                tax += (income - prevLimit) * brackets[i][0] * 0.01 *  incRate;
+                return tax;
             }
         }
-        if (tax < 0) {
-            tax = 0;
-        }
-        return (long) tax;
+
+        // top bracket (37%)
+        tax += (income - prevLimit) * brackets[brackets.length - 1][0] * 0.01 * incRate;
+        return tax;
     }
 }
