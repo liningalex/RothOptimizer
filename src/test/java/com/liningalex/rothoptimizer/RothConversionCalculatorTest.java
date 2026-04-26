@@ -400,4 +400,17 @@ class RothConversionCalculatorTest {
         long a1 = rothConversionCalculator.calDeduction(age1, 1, true);
         assertEquals(a1, 44599);
     }
+
+    @Test
+    void evaluatedAsset() {
+        double[] brk = {100000, 200000};
+        double a = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_ROTH);
+        assertEquals(a, 100000.0);
+        double b = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_TOTAL);
+        assertEquals(b, 400000.0);
+        double c = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_0_YEARS);
+        assertEquals(c, 390293.0);
+        double d = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+        assertEquals(d, 397320.99923045);
+    }
 }

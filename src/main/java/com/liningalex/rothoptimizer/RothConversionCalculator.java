@@ -341,16 +341,18 @@ public class RothConversionCalculator {
 
     double evaluatedAsset(double roth, double brokerage[], double ira, int years, EvaluateMethod eMothod) {
         int[] age = {50, 50};
+        int MAX_YEARS_HOLD = 10;
         if (eMothod == EvaluateMethod.MAX_10_YEARS) {
-            roth = roth * Math.pow(1 + investRtn, 10);
-            ira = ira * Math.pow(1 + investRtn, 10);
+            roth = roth * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
+            ira = ira * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
             brokerage[0] = brokerage[1];
-            brokerage[1] = brokerage[1] * Math.pow(1 + investRtn, 10);
-            return (roth + ira + brokerage[1] - tax(age, (ira + brokerage[1] - brokerage[0]) / 10, 0, 5, true) * 10) / Math.pow(1 + investRtn, 10);
+            brokerage[1] = brokerage[1] * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
+            double avgTax = tax(age, (ira + brokerage[1] - brokerage[0]) / MAX_YEARS_HOLD, 0, years + MAX_YEARS_HOLD / 2, true);
+            return (roth + ira + brokerage[1] - avgTax * MAX_YEARS_HOLD) / Math.pow(1 + investRtn, MAX_YEARS_HOLD);
         } else if (eMothod == EvaluateMethod.MAX_ROTH) {
             return roth;
         } else if (eMothod == EvaluateMethod.MAX_0_YEARS) {
-            return (roth + ira + brokerage[1] - tax(age, ira, 0, 0, true));
+            return (roth + ira + brokerage[1] - tax(age, ira, 0, years, true));
         } else {
             return roth + ira + brokerage[1];
         }
