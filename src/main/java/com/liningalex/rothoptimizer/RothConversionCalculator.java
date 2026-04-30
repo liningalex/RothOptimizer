@@ -235,11 +235,11 @@ public class RothConversionCalculator {
         List<RothConvResults.YearConvResults> yearConvResultsList = new ArrayList<>();
         int years = 0;
         int totalAmd = 0;
+        boolean isJoint = true;
         for (int year = yearBegin; (age[0] <= life[0]) || (age[1] <= life[1]); year++) {
             years = year - yearBegin;
             double[] toRoth = new double[2];
             double[] medicare = new double[2];
-            boolean isJoint = true;
             double income = 0;
             for (int person = 0; person < 2; person++) {
                 // ssn income
@@ -249,8 +249,10 @@ public class RothConversionCalculator {
                 totalAmd += rmd[person];
                 iraBalance[person] -= rmd[person];
                 income += rmd[person];
-                if (age[person] > life[person]) {
+                if (age[person] > life[person] && isJoint) {
                     isJoint = false;
+                    expense /= 2;
+                    taxableIncomeGoal /= 2;
                 }
             }
 
