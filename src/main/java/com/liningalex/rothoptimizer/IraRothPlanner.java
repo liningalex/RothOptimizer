@@ -12,7 +12,8 @@ public class IraRothPlanner {
         options.addOption("i", "ira", true, "ira balance");
         options.addOption("x", "inflation", true, "inflation rate");
         options.addOption("k", "brokerage", true, "brokerage balance");
-        options.addOption("b", "born", true, "born year");
+        options.addOption("b", "born", true, "born years");
+        options.addOption("f", "life", true, "life ages");
         options.addOption("p", "spending", true, "expense");
         options.addOption("s", "ssnIncome", true, "ssn income");
         options.addOption("a", "ssnAge", true, "age to get ssn income");
@@ -26,6 +27,7 @@ public class IraRothPlanner {
         try {
             CommandLine cmd = parser.parse(options, args);
             int[] born = parseArrayInt(cmd.getOptionValue("born", "{1965,1968}"));
+            int[] life = parseArrayInt(cmd.getOptionValue("life", "{90,95}"));
             double[] ira = parseArrayDouble(cmd.getOptionValue("ira", "{1250000,1250000}"));
             double[] brok = parseArrayDouble(cmd.getOptionValue("brokerage", "{35000,54380}"));
             double expense = Double.parseDouble(cmd.getOptionValue("spending", "100000"));
@@ -40,7 +42,7 @@ public class IraRothPlanner {
             RothConversionCalculator.EvaluateMethod evaluateMethod = RothConversionCalculator.EvaluateMethod.valueOf(cmd.getOptionValue("investGoal", "MAX_10_YEARS"));
 
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, ssnIncome, ssnAge,
-                    yearBegin, born, propertyTax, mortgage, donation, inflation, evaluateMethod);
+                    yearBegin, born, life, propertyTax, mortgage, donation, inflation, evaluateMethod);
             System.out.println("No optmiazation, no state tax");
             System.out.println(rothConversionCalculator.rothBalance(expense, (ira[0] + ira[1]) * 2, 1));
             System.out.println("No optmiazation, having state tax");

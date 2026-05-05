@@ -10,10 +10,10 @@ public class RothConvResults {
     final double ira;
     final double totalTax;
     final double asset;
-    final double totalAmd;
+    final double compOp;
 
 
-    public RothConvResults(List<YearConvResults> yearConvResultsList, double income, double roth, double brok, double ira, double totalTax, double asset, double totalAmd) {
+    public RothConvResults(List<YearConvResults> yearConvResultsList, double income, double roth, double brok, double ira, double totalTax, double asset, double compOp) {
         this.yearConvResultsList = yearConvResultsList;
         this.income = income;
         this.roth = roth;
@@ -21,7 +21,7 @@ public class RothConvResults {
         this.ira = ira;
         this.totalTax = totalTax;
         this.asset = asset;
-        this.totalAmd = totalAmd;
+        this.compOp = compOp;
     }
 
     public static class YearConvResults {

@@ -80,7 +80,7 @@ public class RothConversionCalculator {
     public final long[][] ssnDeduction = {{44000, 34000}, {32000, 25000}};
     final int[] rmdAge = new int[2];
     final int[] born;
-    public final int[] life = {90, 95};
+    final int[] life;
     final double[] iraBegin;
     final double[] brokBegin;
     final double inflation;
@@ -136,7 +136,7 @@ public class RothConversionCalculator {
     }
 
     public RothConversionCalculator(double ivtReturn, double[] ira, double[] brok, double[] ssnIncome, int[] ssnAge,
-                                    int yearBegin, int[] born, int propertyTax, int mortgage, int donation, double inflation, EvaluateMethod evaluateMethod) {
+                                    int yearBegin, int[] born, int[] life, int propertyTax, int mortgage, int donation, double inflation, EvaluateMethod evaluateMethod) {
         this.investRtn = ivtReturn;
         this.evaluateMethod = evaluateMethod;
         this.iraBegin = ira.clone();
@@ -146,6 +146,7 @@ public class RothConversionCalculator {
         this.inflation = inflation;
         this.yearBegin = yearBegin;
         this.born = born;
+        this.life = life;
         for (int person = 0; person < 2; person++) {
             this.rmdAge[person] = rmdAge(born[person]);
         }
@@ -326,9 +327,11 @@ public class RothConversionCalculator {
                 iraBalance[1] = 0;
             }
         }
-        double asset = evaluatedAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, evaluateMethod);
+        double[] tax = new double[1];
+        double asset = evaluatedAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, EvaluateMethod.MAX_10_YEARS, tax);
+        double compOp = evaluatedAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, evaluateMethod, tax);
         RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, expense, rothBalance[0] + rothBalance[1],
-                brokBalance[1], iraBalance[0] + iraBalance[1], totalTax, asset, totalAmd);
+                brokBalance[1], iraBalance[0] + iraBalance[1], totalTax + tax[0], asset, compOp);
 
         return rothConvResults;
     }
@@ -341,20 +344,21 @@ public class RothConversionCalculator {
         MAX_TOTAL
     }
 
-    double evaluatedAsset(double roth, double brokerage[], double ira, int years, EvaluateMethod eMothod) {
+    double evaluatedAsset(double roth, double brokerage[], double ira, int years, EvaluateMethod eMothod, double[] tax) {
         int[] age = {50, 50};
         int MAX_YEARS_HOLD = 10;
+        tax[0] = tax(age, ira, 0, years, true);
         if (eMothod == EvaluateMethod.MAX_10_YEARS) {
             roth = roth * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
             ira = ira * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
             brokerage[0] = brokerage[1];
             brokerage[1] = brokerage[1] * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
-            double avgTax = tax(age, (ira + brokerage[1] - brokerage[0]) / MAX_YEARS_HOLD, 0, years + MAX_YEARS_HOLD / 2, true);
-            return (roth + ira + brokerage[1] - avgTax * MAX_YEARS_HOLD) / Math.pow(1 + investRtn, MAX_YEARS_HOLD);
+            tax[0] = tax(age, (ira + brokerage[1] - brokerage[0]) / MAX_YEARS_HOLD, 0, years + MAX_YEARS_HOLD / 2, true);
+            return (roth + ira + brokerage[1] - tax[0] * MAX_YEARS_HOLD) / Math.pow(1 + investRtn, MAX_YEARS_HOLD);
         } else if (eMothod == EvaluateMethod.MAX_ROTH) {
             return roth;
         } else if (eMothod == EvaluateMethod.MAX_0_YEARS) {
-            return (roth + ira + brokerage[1] - tax(age, ira, 0, years, true));
+            return (roth + ira + brokerage[1] - tax[0]);
         } else {
             return roth + ira + brokerage[1];
         }
@@ -365,8 +369,8 @@ public class RothConversionCalculator {
         RothConvResults best = null;
         for (double i = expense; i < iraBegin[0] + iraBegin[1]; i += 500) {
             RothConvResults results = rothBalance(expense, i, noCalYears);
-            if (results.asset > maxAsset) {
-                maxAsset = results.asset;
+            if (results.compOp > maxAsset) {
+                maxAsset = results.compOp;
                 best = results;
             }
         }
