@@ -33,7 +33,7 @@ public class IraRothPlanner {
             double expense = Double.parseDouble(cmd.getOptionValue("spending", "100000"));
             double inflation = Double.parseDouble(cmd.getOptionValue("inflation", "0.025"));
             int[] ssnAge = parseArrayInt(cmd.getOptionValue("ssnAge", "{67,67}"));
-            double[] ssnIncome = parseArrayDouble(cmd.getOptionValue("ssnIncome", "{48000, 48000}"));
+            double[] ssnIncome = Arrays.stream(parseArrayDouble(cmd.getOptionValue("ssnIncome", "{4000, 4000}"))).map(i -> i * 12).toArray();
             double ivtReturn = Double.parseDouble(cmd.getOptionValue("investRtn", "0.08"));
             int yearBegin = Integer.parseInt(cmd.getOptionValue("yearBegin", "2025"));
             int propertyTax = Integer.parseInt(cmd.getOptionValue("propertyTax", "0"));
