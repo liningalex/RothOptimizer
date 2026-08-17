@@ -466,27 +466,29 @@ class RothConversionCalculatorTest {
         long a3 = rothConversionCalculator.fedDeduction(age, 550000, true, 0, true);
         assertEquals(a3, 33100);
         long a4 = rothConversionCalculator.fedDeduction(age, 505000, true, 0, true);
-        assertEquals(a4, 40400);
+        assertEquals(a4, 42000);
     }
 
     @Test
     void fedDeduction2() {
         int[] age = {65, 63};
-        /*long a = rothConversionCalculator.fedDeduction(age, 140000, true, 1, true);
+        long a = rothConversionCalculator.fedDeduction(age, 140000, true, 1, true);
         assertEquals(a, 39887);
         long a1 = rothConversionCalculator.fedDeduction(age, 200000, true, 1, true);
         assertEquals(a1, 33887);
         int[] age1 = {68, 63};
         long a2 = rothConversionCalculator.fedDeduction(age, 140000, true, 10, true);
-        assertEquals(a2, 47922);
+        assertEquals(a2, 40322);
         long a3 = rothConversionCalculator.fedDeduction(age, 550000, true, 21, true);
-        assertEquals(a3, 54506);
+        assertEquals(a3, 52906);
         long a4 = rothConversionCalculator.fedDeduction(age, 505000, true, 31, true);
-        assertEquals(a4, 69325);*/
+        assertEquals(a4, 67725);
         long a5 = rothConversionCalculator.fedDeduction(age, 505000, true, 2, true);
-        assertEquals(a5, 40400);
+        assertEquals(a5, 42000);
         long a6 = rothConversionCalculator.fedDeduction(age, 505000, true, 4, true);
-        assertEquals(a6, 36370);
+        assertEquals(a6, 34770);
+        long a7 = rothConversionCalculator.fedDeduction(age, 510120, true, 1, true);
+        assertEquals(a7, 40464);
     }
 
     @Test

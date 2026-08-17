@@ -97,18 +97,7 @@ public class RothConversionCalculator {
 
     long fedDeduction(int[] age, double income, boolean calTax, int years, boolean isJoint) {
         double stdAmount = this.fedDeductionDefault[isJoint ? 1 : 0] * Math.pow(1 + inflation, years);
-        if ((yearBegin + years) < 2029) {
-            for (int person = 0; person < 2; person++) {
-                if (age[person] >= 65) {
-                    stdAmount += 1600;
-                    if (income < 150000)
-                        stdAmount += 6000;
-                }
-                if (age[person] > life[person]) {
-                    isJoint = false;
-                }
-            }
-        }
+
         double itemized = 10000;
         double localTax = 0;
         if ((yearBegin + years) < 2030) {
@@ -122,7 +111,20 @@ public class RothConversionCalculator {
                 itemized = (long) Math.min(localTax + mortgage + propertyTax + donation, 40400 - (income - 505000) * 0.3);
             }
         }
-        return (long) (Math.max(stdAmount, itemized) + ssnDeduction(income, age, years, isJoint));
+        long deduction = (long) (Math.max(stdAmount, itemized) + ssnDeduction(income, age, years, isJoint));
+        if ((yearBegin + years) < 2029) {
+            for (int person = 0; person < 2; person++) {
+                if (age[person] >= 65) {
+                    deduction += 1600;
+                    if (income < 150000)
+                        deduction += 6000;
+                }
+                if (age[person] > life[person]) {
+                    isJoint = false;
+                }
+            }
+        }
+        return deduction;
     }
 
     double ssnDeduction(double income, int[] age,  int years, boolean isJoint) {
