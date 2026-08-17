@@ -20,7 +20,16 @@ class RothConversionCalculatorTest {
     double inflation = 0.025;
 
     RothConversionCalculator rothConversionCalculator =
-            new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+            new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation,
+                    RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
+
+    RothConversionCalculator rothConversionCalculatorIRA =
+            new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation,
+                    RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.IRA);
+
+    RothConversionCalculator rothConversionCalculatorRoth =
+            new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation,
+                    RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.ROTH);
 
     @Test
     void rothBalanceSsnIncome1() {
@@ -29,7 +38,8 @@ class RothConversionCalculatorTest {
         double[] ira = {0, 0};
         double[] brok = {0, 0};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation,
+                        RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
         RothConvResults a1 = rothConversionCalculator.rothBalance(12000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 12840);
@@ -41,7 +51,8 @@ class RothConversionCalculatorTest {
         double[] ssnIncome = {1000 * 12, 1000 * 12};
         int[] born = {1937, 1932};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation,
+                        RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
         RothConvResults a1 = rothConversionCalculator.rothBalance(12000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 26899);
@@ -56,11 +67,12 @@ class RothConversionCalculatorTest {
         double[] ssnIncome = {0, 0};
         double[] ira = {0, 0};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                new RothConversionCalculator(0.07, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, inflation,
+                        RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
         RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 21400);
-        assertEquals((long) a1.totalTax, 0);
+        assertEquals((long) a1.totalTax, 6);
     }
 
 
@@ -71,7 +83,8 @@ class RothConversionCalculatorTest {
         double[] ssnIncome = {0, 0};
         double[] ira = {0, 0};
         RothConversionCalculator rothConversionCalculator =
-                new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0,
+                        RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
         RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
         assertEquals((long) a1.roth, 0);
         assertEquals((long) a1.brok, 0);
@@ -86,7 +99,8 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {40000, 40000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0,
+                            RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 0, 100);
             assertEquals((long) a1.roth, 0);
             assertEquals((long) a1.brok, 0);
@@ -105,7 +119,8 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {20000, 20000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0,
+                            RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
             RothConvResults a1 = rothConversionCalculator.rothBalance(20000, 0, 100);
             assertEquals((long) a1.roth, 0);
             assertEquals((long) a1.brok, 0);
@@ -122,13 +137,14 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {80000, 80000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0,
+                            RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 72000, 100);
             assertEquals((long) a1.roth, 12000);
             assertEquals((long) a1.brok, 0);
             assertEquals((long) a1.ira, 76259);
             assertEquals((long) a1.yearConvResultsList.get(0).medicare[0] + a1.yearConvResultsList.get(0).medicare[1], 7776.0);
-            assertEquals((long) a1.totalTax, 3965);
+            assertEquals((long) a1.totalTax, 9873);
         }
     }
 
@@ -140,7 +156,8 @@ class RothConversionCalculatorTest {
             double[] ssnIncome = {0, 0};
             double[] ira = {80000, 80000};
             RothConversionCalculator rothConversionCalculator =
-                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS);
+                    new RothConversionCalculator(0.0, ira, brok, ssnIncome, ssnAge, yearBegin, born, life, propertyTax, mortgage, donation, 0,
+                            RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, RothConversionCalculator.WithDrawOrder.BROKERAGE);
             RothConvResults a1 = rothConversionCalculator.rothBalance(60000, 72000, 100);
             assertEquals((long) a1.roth, 17413);
             assertEquals((long) a1.brok, 0);
@@ -258,6 +275,37 @@ class RothConversionCalculatorTest {
     }
 
     @Test
+    void withDrawIRA1() {
+        double[] brok = {1, 3};
+        double[] ira = {5, 5};
+        double[] roth = {10, 10};
+        double a = rothConversionCalculatorIRA.withDraw(20, brok, ira, roth);
+        assertEquals(a, 12.0);
+        assertEquals(brok[0], 0.0);
+        assertEquals(brok[1], 0.0);
+        assertEquals(ira[0], 0.0);
+        assertEquals(ira[1], 0.0);
+        assertEquals(roth[0], 6.5);
+        assertEquals(roth[1], 6.5);
+    }
+
+
+    @Test
+    void withDrawRoth1() {
+        double[] brok = {1, 3};
+        double[] ira = {5, 5};
+        double[] roth = {10, 10};
+        double a = rothConversionCalculatorRoth.withDraw(20, brok, ira, roth);
+        assertEquals(a, 0.0);
+        assertEquals(brok[0], 1.0);
+        assertEquals(brok[1], 3.0);
+        assertEquals(ira[0], 5.0);
+        assertEquals(ira[1], 5.0);
+        assertEquals(roth[0], 0.0);
+        assertEquals(roth[1], 0.0);
+    }
+
+    @Test
     void withDraw2() {
         double[] brok = {1, 3};
         double[] ira = {15, 5};
@@ -273,6 +321,37 @@ class RothConversionCalculatorTest {
     }
 
     @Test
+    void withDrawIRA2() {
+        double[] brok = {1, 3};
+        double[] ira = {15, 5};
+        double[] roth = {10, 10};
+        double a = rothConversionCalculatorIRA.withDraw(20, brok, ira, roth);
+        assertEquals(a, 20);
+        assertEquals(brok[0], 1.0);
+        assertEquals(brok[1], 3.0);
+        assertEquals(ira[0], 0.0);
+        assertEquals(ira[1], 0.0);
+        assertEquals(roth[0], 10.0);
+        assertEquals(roth[1], 10.0);
+    }
+
+    @Test
+    void withDrawRoth2() {
+        double[] brok = {1, 3};
+        double[] ira = {15, 5};
+        double[] roth = {10, 10};
+        double a = rothConversionCalculatorRoth.withDraw(20, brok, ira, roth);
+        assertEquals(a, 0.0);
+        assertEquals(brok[0], 1.0);
+        assertEquals(brok[1], 3.0);
+        assertEquals(ira[0], 15.0);
+        assertEquals(ira[1], 5.0);
+        assertEquals(roth[0], 0.0);
+        assertEquals(roth[1], 0.0);
+    }
+
+
+    @Test
     void withDraw3() {
         double[] brok = {1, 3};
         double[] ira = {15, 5};
@@ -283,8 +362,38 @@ class RothConversionCalculatorTest {
         assertEquals(brok[1], 0.0);
         assertEquals(ira[0], 0.0);
         assertEquals(ira[1], 0.0);
-        assertEquals(roth[0], 8.5);
-        assertEquals(roth[1], 9.5);
+        assertEquals(roth[0], 9.0);
+        assertEquals(roth[1], 9.0);
+    }
+
+    @Test
+    void withDrawIRA3() {
+        double[] brok = {1, 3};
+        double[] ira = {15, 5};
+        double[] roth = {10, 10};
+        double a = rothConversionCalculatorIRA.withDraw(25, brok, ira, roth);
+        assertEquals(a, 22);
+        assertEquals(brok[0], 0.0);
+        assertEquals(brok[1], 0.0);
+        assertEquals(ira[0], 0.0);
+        assertEquals(ira[1], 0.0);
+        assertEquals(roth[0], 9.0);
+        assertEquals(roth[1], 9.0);
+    }
+
+    @Test
+    void withDrawRoth3() {
+        double[] brok = {1, 3};
+        double[] ira = {15, 5};
+        double[] roth = {10, 10};
+        double a = rothConversionCalculatorRoth.withDraw(25, brok, ira, roth);
+        assertEquals(a, 4);
+        assertEquals(brok[0], 0.0);
+        assertEquals(brok[1], 0.0);
+        assertEquals(ira[0], 13.5);
+        assertEquals(ira[1], 4.5);
+        assertEquals(roth[0], 0.0);
+        assertEquals(roth[1], 0.0);
     }
 
     @Test
@@ -301,6 +410,7 @@ class RothConversionCalculatorTest {
         assertEquals(roth[0], 10.0);
         assertEquals(roth[1], 10.0);
     }
+
 
     @Test
     void taxAmount1() {
@@ -405,6 +515,7 @@ class RothConversionCalculatorTest {
     @Test
     void evaluatedAsset() {
         double[] tax = new double[1];
+        double[] brk0 = {0, 0};
         double[] brk = {100000, 200000};
         double a = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_ROTH, tax);
         assertEquals(a, 100000.0);
@@ -412,7 +523,11 @@ class RothConversionCalculatorTest {
         assertEquals(b, 400000.0);
         double c = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_0_YEARS, tax);
         assertEquals(c, 390293.0);
-        double d = rothConversionCalculator.evaluatedAsset(100000, brk, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, tax);
-        assertEquals(d, 397320.99923045);
+        double d = rothConversionCalculator.evaluatedAsset(100000, brk0, 0, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, tax);
+        assertEquals(d, 100000.0);
+        double e = rothConversionCalculator.evaluatedAsset(0, brk0, 100000, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, tax);
+        assertEquals(e, 85249.73693941903);
+        double f = rothConversionCalculator.evaluatedAsset(0, brk, 0, 0, RothConversionCalculator.EvaluateMethod.MAX_10_YEARS, tax);
+        assertEquals(f, 185750.46099217172);
     }
 }

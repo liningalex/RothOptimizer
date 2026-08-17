@@ -86,6 +86,7 @@ public class RothConversionCalculator {
     final double inflation;
     final double investRtn;
     final EvaluateMethod evaluateMethod;
+    final WithDrawOrder withDrawOrder;
     final double[] ssnIncome;
     final int[] ssnAge;
     final int yearBegin;
@@ -136,9 +137,11 @@ public class RothConversionCalculator {
     }
 
     public RothConversionCalculator(double ivtReturn, double[] ira, double[] brok, double[] ssnIncome, int[] ssnAge,
-                                    int yearBegin, int[] born, int[] life, int propertyTax, int mortgage, int donation, double inflation, EvaluateMethod evaluateMethod) {
+                                    int yearBegin, int[] born, int[] life, int propertyTax, int mortgage, int donation, double inflation,
+                                    EvaluateMethod evaluateMethod, WithDrawOrder withDrawOrder) {
         this.investRtn = ivtReturn;
         this.evaluateMethod = evaluateMethod;
+        this.withDrawOrder = withDrawOrder;
         this.iraBegin = ira.clone();
         this.brokBegin = brok.clone();
         this.ssnIncome = ssnIncome;
@@ -189,21 +192,26 @@ public class RothConversionCalculator {
         return rtn;
     }
 
-    double withDraw(double amount, double[] brokBalance, double[] iraBalance, double[] rothBalance) {
-        double[] amtAndGain = withDrawBrokerage(brokBalance, amount);
-        double taxableIncome = amtAndGain[1];
+    double withDraw401k(double [] iraBalance, double amount) {
+        if (amount <= 0) {
+            return amount;
+        }
+        double rtn = 0;
         int[] age = {60, 60};
-        if ((amount - amtAndGain[0]) > 0) {
-            taxableIncome += amount - amtAndGain[0];
-            double[] convRatio = convRatio(iraBalance, age, amount - amtAndGain[0]);
+        double[] convRatio = convRatio(iraBalance, age, amount);
+        for (int person = 0; person < 2; person++) {
+            double amt = convRatio[person] * amount;
+            amt = Math.min(iraBalance[person], amt);
+            iraBalance[person] -= amt;
+            rtn += amt;
+        }
+        return rtn;
+    }
+
+    double withDrawRoth(double amountReq, double[] rothBalance) {
+        if (rothBalance[0] + rothBalance[1] > 0) {
             for (int person = 0; person < 2; person++) {
-                double amt = convRatio[person] * (amount - amtAndGain[0]);
-                iraBalance[person] -= amt;
-                if (iraBalance[person] < 0) {
-                    rothBalance[person] += iraBalance[person];
-                    taxableIncome += iraBalance[person];
-                    iraBalance[person] = 0;
-                }
+                rothBalance[person] -= amountReq / 2;
             }
             if (rothBalance[0] < 0) {
                 rothBalance[1] += rothBalance[0];
@@ -212,8 +220,61 @@ public class RothConversionCalculator {
                 rothBalance[0] += rothBalance[1];
                 rothBalance[1] = 0;
             }
+            if ((rothBalance[0] + rothBalance[1]) >= 0) {
+                return amountReq;
+            } else {
+                amountReq += rothBalance[0] + rothBalance[1];
+                rothBalance[0] = 0;
+                rothBalance[1] = 0;
+                return amountReq;
+            }
+        } else {
+            return 0;
         }
-        return taxableIncome;
+    }
+
+    double withDraw(double amountReq, double[] brokBalance, double[] iraBalance, double[] rothBalance) {
+        if (withDrawOrder == WithDrawOrder.BROKERAGE) {
+            double[] amtAndGain = withDrawBrokerage(brokBalance, amountReq);
+            double taxableIncome = amtAndGain[1];
+            amountReq -= amtAndGain[0];
+            if (amountReq > 0) {
+                double amount401k = withDraw401k(iraBalance, amountReq);
+                taxableIncome += amount401k;
+                amountReq -= amount401k;
+                if (amountReq > 0) {
+                    withDrawRoth(amountReq, rothBalance);
+                }
+            }
+            return taxableIncome;
+        } else if (withDrawOrder == WithDrawOrder.IRA) {
+            double amount401k = withDraw401k(iraBalance, amountReq);
+            double taxableIncome = amount401k;
+            amountReq -= amount401k;
+            if (amountReq > 0) {
+                double[] amtAndGain = withDrawBrokerage(brokBalance, amountReq);
+                taxableIncome += amtAndGain[1];
+                amountReq -= amtAndGain[0];
+                if (amountReq > 0) {
+                    withDrawRoth(amountReq, rothBalance);
+                }
+            }
+            return taxableIncome;
+        } else {
+            double amountRoth = withDrawRoth(amountReq, rothBalance);
+            amountReq -= amountRoth;
+            double taxableIncome = 0;
+            if (amountReq > 0) {
+                double[] amtAndGain = withDrawBrokerage(brokBalance, amountReq);
+                taxableIncome += amtAndGain[1];
+                amountReq -= amtAndGain[0];
+                if (amountReq > 0) {
+                    double amount401k = withDraw401k(iraBalance, amountReq);
+                    taxableIncome += amount401k;
+                }
+            }
+            return taxableIncome;
+        }
     }
 
     double tax(int[] age, double taxableIncome, int noCalYears, int years, boolean isJoint) {
@@ -331,7 +392,7 @@ public class RothConversionCalculator {
         double asset = evaluatedAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, EvaluateMethod.MAX_10_YEARS, tax);
         double compOp = evaluatedAsset(rothBalance[0] + rothBalance[1], brokBalance.clone(), iraBalance[0] + iraBalance[1], years, evaluateMethod, tax);
         RothConvResults rothConvResults = new RothConvResults(yearConvResultsList, expense, rothBalance[0] + rothBalance[1],
-                brokBalance[1], iraBalance[0] + iraBalance[1], totalTax + tax[0], asset, compOp);
+                brokBalance[1], iraBalance[0] + iraBalance[1], totalTax + tax[0], asset, compOp, evaluateMethod, withDrawOrder);
 
         return rothConvResults;
     }
@@ -344,6 +405,12 @@ public class RothConversionCalculator {
         MAX_TOTAL
     }
 
+    public enum WithDrawOrder {
+        IRA,
+        BROKERAGE,
+        ROTH
+    }
+
     double evaluatedAsset(double roth, double brokerage[], double ira, int years, EvaluateMethod eMothod, double[] tax) {
         int[] age = {50, 50};
         int MAX_YEARS_HOLD = 10;
@@ -353,8 +420,8 @@ public class RothConversionCalculator {
             ira = ira * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
             brokerage[0] = brokerage[1];
             brokerage[1] = brokerage[1] * Math.pow(1 + investRtn, MAX_YEARS_HOLD);
-            tax[0] = tax(age, (ira + brokerage[1] - brokerage[0]) / MAX_YEARS_HOLD, 0, years + MAX_YEARS_HOLD / 2, true);
-            return (roth + ira + brokerage[1] - tax[0] * MAX_YEARS_HOLD) / Math.pow(1 + investRtn, MAX_YEARS_HOLD);
+            tax[0] = tax(age, (ira + brokerage[1] - brokerage[0]), 0, years + MAX_YEARS_HOLD, true);
+            return (roth + ira + brokerage[1] - tax[0]) / Math.pow(1 + investRtn, MAX_YEARS_HOLD);
         } else if (eMothod == EvaluateMethod.MAX_ROTH) {
             return roth;
         } else if (eMothod == EvaluateMethod.MAX_0_YEARS) {

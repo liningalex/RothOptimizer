@@ -23,6 +23,7 @@ public class IraRothPlanner {
         options.addOption("m", "mortgage", true, "mortgage interest");
         options.addOption("d", "donation", true, "donation");
         options.addOption("g", "investGoal", true, "investment goal");
+        options.addOption("w", "withdrawOrder", true, "withdraw order");
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -40,9 +41,10 @@ public class IraRothPlanner {
             int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
             int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
             RothConversionCalculator.EvaluateMethod evaluateMethod = RothConversionCalculator.EvaluateMethod.valueOf(cmd.getOptionValue("investGoal", "MAX_10_YEARS"));
+            RothConversionCalculator.WithDrawOrder withDrawOrder = RothConversionCalculator.WithDrawOrder.valueOf(cmd.getOptionValue("withdrawOrder", "BROKERAGE"));
 
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, ssnIncome, ssnAge,
-                    yearBegin, born, life, propertyTax, mortgage, donation, inflation, evaluateMethod);
+                    yearBegin, born, life, propertyTax, mortgage, donation, inflation, evaluateMethod, withDrawOrder);
             System.out.println("No optmiazation, no state tax");
             System.out.println(rothConversionCalculator.rothBalance(expense, (ira[0] + ira[1]) * 2, 1));
             System.out.println("No optmiazation, having state tax");

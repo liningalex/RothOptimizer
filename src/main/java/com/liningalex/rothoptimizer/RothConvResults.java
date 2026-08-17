@@ -3,6 +3,8 @@ package com.liningalex.rothoptimizer;
 import java.util.List;
 
 public class RothConvResults {
+    private final RothConversionCalculator.EvaluateMethod evaluateMethod;
+    private final RothConversionCalculator.WithDrawOrder withDrawOrder;
     List<YearConvResults> yearConvResultsList;
     final double income;
     final double roth;
@@ -13,7 +15,8 @@ public class RothConvResults {
     final double compOp;
 
 
-    public RothConvResults(List<YearConvResults> yearConvResultsList, double income, double roth, double brok, double ira, double totalTax, double asset, double compOp) {
+    public RothConvResults(List<YearConvResults> yearConvResultsList, double income, double roth, double brok, double ira, double totalTax,
+                           double asset, double compOp, RothConversionCalculator.EvaluateMethod evaluateMethod, RothConversionCalculator.WithDrawOrder withDrawOrder) {
         this.yearConvResultsList = yearConvResultsList;
         this.income = income;
         this.roth = roth;
@@ -22,6 +25,8 @@ public class RothConvResults {
         this.totalTax = totalTax;
         this.asset = asset;
         this.compOp = compOp;
+        this.evaluateMethod = evaluateMethod;
+        this.withDrawOrder = withDrawOrder;
     }
 
     public static class YearConvResults {
@@ -66,7 +71,7 @@ public class RothConvResults {
     @Override
     public String toString() {
         return String.join("\n", yearConvResultsList.stream().map(String::valueOf).toList()) + "\n" +
-                String.format("income=%.0f,asset=%.0f(roth=%.0f, brokerage=%.0f, ira=%.0f),totalTax=%.0f",
-                        income, asset, roth, brok, ira, totalTax) + "\n";
+                String.format("%s,%s,income=%.0f,asset=%.0f(roth=%.0f, brokerage=%.0f, ira=%.0f),totalTax=%.0f",
+                        evaluateMethod, withDrawOrder, income, asset, roth, brok, ira, totalTax) + "\n";
     }
 }
