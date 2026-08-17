@@ -22,6 +22,7 @@ public class IraRothPlanner {
         options.addOption("t", "propertyTax", true, "property tax");
         options.addOption("m", "mortgage", true, "mortgage interest");
         options.addOption("d", "donation", true, "donation");
+        options.addOption("o", "roth", true, "roth balance");
         options.addOption("g", "investGoal", true, "investment goal");
         options.addOption("w", "withdrawOrder", true, "withdraw order");
         CommandLineParser parser = new DefaultParser();
@@ -40,10 +41,11 @@ public class IraRothPlanner {
             int propertyTax = Integer.parseInt(cmd.getOptionValue("propertyTax", "0"));
             int mortgage = Integer.parseInt(cmd.getOptionValue("mortgage", "0"));
             int donation = Integer.parseInt(cmd.getOptionValue("donation", "0"));
+            double[] roth = new double[]{Double.parseDouble(cmd.getOptionValue("roth", "0.0"))};
             RothConversionCalculator.EvaluateMethod evaluateMethod = RothConversionCalculator.EvaluateMethod.valueOf(cmd.getOptionValue("investGoal", "MAX_10_YEARS"));
             RothConversionCalculator.WithDrawOrder withDrawOrder = RothConversionCalculator.WithDrawOrder.valueOf(cmd.getOptionValue("withdrawOrder", "BROKERAGE"));
 
-            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, ssnIncome, ssnAge,
+            RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, roth, ssnIncome, ssnAge,
                     yearBegin, born, life, propertyTax, mortgage, donation, inflation, evaluateMethod, withDrawOrder);
             System.out.println("No optmiazation, no state tax");
             System.out.println(rothConversionCalculator.rothBalance(expense, (ira[0] + ira[1]) * 2, 1));
