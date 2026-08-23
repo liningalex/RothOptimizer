@@ -47,11 +47,13 @@ public class IraRothPlanner {
 
             RothConversionCalculator rothConversionCalculator = new RothConversionCalculator(ivtReturn, ira, brok, roth, ssnIncome, ssnAge,
                     yearBegin, born, life, propertyTax, mortgage, donation, inflation, evaluateMethod, withDrawOrder);
-            System.out.println("No optmiazation, no state tax");
-            System.out.println(rothConversionCalculator.rothBalance(expense, (ira[0] + ira[1]) * 2, 1));
+            /*System.out.println("No optmiazation, no state tax");
+            System.out.println(rothConversionCalculator.rothBalance(expense, (ira[0] + ira[1]) * 2, 1));*/
             System.out.println("No optmiazation, having state tax");
             System.out.println(rothConversionCalculator.rothBalance(expense, 0, 0));
             System.out.println("Having optmiazation, having state tax");
+            System.out.println(rothConversionCalculator.optimalConversion(expense,0));
+            rothConversionCalculator.setEvaluateMethod(RothConversionCalculator.EvaluateMethod.MAX_ROTH);
             System.out.println(rothConversionCalculator.optimalConversion(expense,0));
         } catch (ParseException e) {
             throw new RuntimeException(e);

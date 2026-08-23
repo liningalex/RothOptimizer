@@ -86,7 +86,7 @@ public class RothConversionCalculator {
     final double[] rothBegin;
     final double inflation;
     final double investRtn;
-    final EvaluateMethod evaluateMethod;
+    EvaluateMethod evaluateMethod;
     final WithDrawOrder withDrawOrder;
     final double[] ssnIncome;
     final int[] ssnAge;
@@ -94,6 +94,10 @@ public class RothConversionCalculator {
     final int propertyTax;
     final int mortgage;
     final int donation;
+
+    void setEvaluateMethod(EvaluateMethod evaluateMethod) {
+        this.evaluateMethod = evaluateMethod;
+    }
 
     long fedDeduction(int[] age, double income, boolean calTax, int years, boolean isJoint) {
         double stdAmount = this.fedDeductionDefault[isJoint ? 1 : 0] * Math.pow(1 + inflation, years);
@@ -338,9 +342,6 @@ public class RothConversionCalculator {
             double medicareOrig = 0;
             // tax with final updated taxableIncome.
             while (true) {
-                if (taxableIncome > 1000000) {
-                    // System.out.println("hello");
-                }
                 fedDeduction = fedDeduction(age, taxableIncome, noCalYears <= 0, years, isJoint);
                 fedTax = taxAmount(taxableIncome - fedDeduction, fedTaxBracket, isJoint, years);
                 if (noCalYears <= 0) {
@@ -383,6 +384,9 @@ public class RothConversionCalculator {
             } else if (age[1] > life[1]) {
                 iraBalance[0] += iraBalance[1];
                 iraBalance[1] = 0;
+            }
+            if (rothBalance[0] + iraBalance[0] + iraBalance[1] + brokBalance[1] <= 0) {
+                break;
             }
         }
         double[] tax = new double[1];
@@ -431,7 +435,7 @@ public class RothConversionCalculator {
     RothConvResults optimalConversion(double expense, int noCalYears) {
         double maxAsset = -Double.MAX_VALUE;
         RothConvResults best = null;
-        for (double i = expense; i < iraBegin[0] + iraBegin[1]; i += 500) {
+        for (double i = expense / 2; i < iraBegin[0] + iraBegin[1]; i += 500) {
             RothConvResults results = rothBalance(expense, i, noCalYears);
             if (results.compOp > maxAsset) {
                 maxAsset = results.compOp;
